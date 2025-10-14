@@ -24,6 +24,8 @@ Text goes here. Place your data in the /data folder, and add dimensions and code
 # Code goes here
 # Read in your data file
 # Print the output of glimpse() or skim()
+ai_data <- read_csv("../data/Charlotin-hallucination_cases.csv")
+
 ```
 
 ## 3. Data analysis plan
