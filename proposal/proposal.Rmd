@@ -21,10 +21,11 @@ Text goes here. Refer to the Markdown Quick Reference: Help -> Markdown Quick Re
 Text goes here. Place your data in the /data folder, and add dimensions and codebook to the README in that folder. Then print out the output of glimpse() or skim() of your data frame.
 
 ```{r}
-# Code goes here
 # Read in your data file
 # Print the output of glimpse() or skim()
 ai_data <- read_csv("../data/Charlotin-hallucination_cases.csv")
+print(glimpse(ai_data))
+print(spec(ai_data))
 
 ```
 
