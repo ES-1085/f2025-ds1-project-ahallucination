@@ -1,13 +1,14 @@
 ---
 title: "Project proposal"
-author: "Team name"
+author: "AI Hallunication Cases - Yuka, Brynn, & Sasha"
 output: github_document
 ---
 
 ```{r load-packages, message = FALSE}
 library(tidyverse)
 library(broom)
-## Add any additional packages you are using here
+ai_data <- read_csv("../data/Charlotin-hallucination_cases.csv")
+#view(ai_data)
 ```
 
 ## 1. Introduction
