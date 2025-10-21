@@ -30,6 +30,7 @@ print(spec(ai_data))
 
 
 ```
+
 ```{r variables-description}
 AI_Hallucination_Cases_renamed_variables <- as_tibble(ai_data) |>
   rename(
