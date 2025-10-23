@@ -35,7 +35,7 @@ AI_Hallucination_Cases_renamed_variables <- as_tibble(ai_data) |>
   rename(
     `case_name` = `Case name`,
     `court` = `Court`,
-    `state` = `State`,
+    `location` = `State(s)`,
     `date` = `Date`,
     `party(ies)` = `Party(ies)`,
     `ai_tool` = `AI Tool`,
@@ -53,7 +53,7 @@ AI_Hallucination_Cases_renamed_variables <- as_tibble(ai_data) |>
 ```{r variables-description}
 AI_Hallucination_Cases_descriptions <- tibble::tibble(
   variable = c(
-    "case_name", "court", "state", "date", "parties", "ai_tool", "hallucination",
+    "case_name", "court", "location", "date", "parties", "ai_tool", "hallucination",
     "outcome", "monetary_penalty", "professional_sanction", "key_principle",
     "pointer", "source", "details"
   ),
@@ -82,7 +82,20 @@ AI_Hallucination_Cases_descriptions <- tibble::tibble(
 
 Text goes here.
 - What variables will you visualize to explore your research questions?
+case_name
+court
+location
+parties
+ai_tool
+hallucination
+outcome
+monetary_penatly
+professional_sanction
+details
+
 - Will there be any other data that you need to find to help with your research question?
+
+
 - Very preliminary exploratory data analysis, including some summary statistics and visualizations, along with some explanation on how they help you learn more about your data. (You can add to these later as you work on your project.)
 - The data visualization(s) that you believe will be useful in exploring your question(s). (You can update these later as you work on your project.)
 
