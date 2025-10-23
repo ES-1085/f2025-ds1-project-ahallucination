@@ -28,28 +28,55 @@ ai_data <- read_csv("../data/Charlotin-hallucination_cases.csv")
 print(glimpse(ai_data))
 print(spec(ai_data))
 
+```
 
+```{r variables-renaming}
+AI_Hallucination_Cases_renamed_variables <- as_tibble(ai_data) |>
+  rename(
+    `case_name` = `Case name`,
+    `court` = `Court`,
+    `state` = `State`,
+    `date` = `Date`,
+    `party(ies)` = `Party(ies)`,
+    `ai_tool` = `AI Tool`,
+    `hallucination` = `Hallucination`,
+    `outcome` = `Outcome`,
+    `monetary_penalty` = `Monetary penalty`,
+    `professional_sanction` = `Professional sanction`,
+    `key_principle` = `Key principle`,
+    `pointer` = `Pointer`,
+    `source` = `Source`,
+    `details` = `Details`
+    )
 ```
 
 ```{r variables-description}
-AI_Hallucination_Cases_renamed_variables <- as_tibble(ai_data) |>
-  rename(
-    `case_name` = `The official title of the legal case`,
-    `court` = `The court where the case was heard`,
-    `state` = `The state(s) or jurisdiction(s) where the case took place`,
-    `date` = `The date when the decision or event related to AI hallucination occurred`,
-    `party(ies)` = `The party responsible for using AI-generated or hallucinated content`,
-    `ai_tool` = `The AI system or model involved in producing hallucinated content`,
-    `hallucination` = `The nature or type of AI hallucination observed`,
-    `outcome` = `The court’s decision or resulting action`,
-    `monetary penalty` = `Any financial fine or penalty imposed as a result of the AI hallucination`,
-    `professional_sanction` = `Indicates whether professional disciplinary action was taken against the party`,
-    `key_principle` = `The legal or ethical principle highlighted in the case`,
-    `pointer` = `Reference or tag connecting the case to a commentary or analysis`,
-    `source` = `The source link or reference to the full legal decision, article, or document`,
-    `details` = `Additional contextual information or editor’s note summarizing the case background`
+AI_Hallucination_Cases_descriptions <- tibble::tibble(
+  variable = c(
+    "case_name", "court", "state", "date", "parties", "ai_tool", "hallucination",
+    "outcome", "monetary_penalty", "professional_sanction", "key_principle",
+    "pointer", "source", "details"
+  ),
+  description = c(
+    "The official title of the legal case",
+    "The court where the case was heard",
+    "The state(s) or jurisdiction(s) where the case took place",
+    "The date when the decision or event related to AI hallucination occurred",
+    "The party responsible for using AI-generated or hallucinated content",
+    "The AI system or model involved in producing hallucinated content",
+    "The nature or type of AI hallucination observed",
+    "The court’s decision or resulting action",
+    "Any financial fine or penalty imposed as a result of the AI hallucination",
+    "Indicates whether professional disciplinary action was taken against the party",
+    "The legal or ethical principle highlighted in the case",
+    "Reference or tag connecting the case to a commentary or analysis",
+    "The source link or reference to the full legal decision, article, or document",
+    "Additional contextual information or editor’s note summarizing the case background"
   )
+)
+
 ```
+
 
 ## 3. Data analysis plan
 
