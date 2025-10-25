@@ -13,9 +13,17 @@ ai_data <- read_csv("../data/Charlotin-hallucination_cases.csv")
 
 ## 1. Introduction
 
-The introduction should introduce your general research question(s) and your data (where it came from, how it was collected, what are the cases, what are the variables, etc.).
+We found our data set on Kaggle, and it was contributed by a man named Damien Charlotin. He is a senior research fellow, specifically on artificial intelligence and the law. He is also a lecturer and independent practitioner in Paris. The AI hallucinations dataset contains cases from across the world from 2023 to 2025. The dataset keeps a record of legal cases in which AI was used and found to be wrong. Generative AI produced incorrect citations as well as other fake arguments. The dataset contains the case, the type of hallucination, the type of AI, the outcome of the case, the monetary penalty, the state, the time, etc. Our data is set up nicely, where each observation directly translates to a specific court case that is listed by name. The study in which the data was collected is relatively new. There are currently 426 cases where generative AI has been used, however, this dataset is still expanding as more come to light. Note that this study is a work in progress and doesn’t contain all court cases in which AI was used. It is noted on Kaggle that the data will be updated annually with new findings. We were mainly interested in when these cases started emerging, what forms of AI were being used the most, and how some of our variables like party and hallucination type, affect monetary penalty.Some of our research questions we want to examine further are:
+1. Which states come up the most with AI hallucinations?
+2. What LLM is being used the most?
+3. What year did cases start to spike? 
+4. What AI hallucinations have a higher monetary penalty?
+5. What effect did the party type have on the outcome and monetary penalty within each case?
 
+<<<<<<< HEAD
 Text goes here. Refer to the Markdown Quick Reference: Help -\> Markdown Quick Reference.
+=======
+>>>>>>> 5613856617af10f8833228f9377d3efe0c466545
 
 ## 2. Data
 
@@ -26,12 +34,89 @@ Text goes here. Place your data in the /data folder, and add dimensions and code
 # Read in your data file
 # Print the output of glimpse() or skim()
 ai_data <- read_csv("../data/Charlotin-hallucination_cases.csv")
+<<<<<<< HEAD
 
 ```
 
 ## 3. Data analysis plan
 
 Text goes here. - What variables will you visualize to explore your research questions? - Will there be any other data that you need to find to help with your research question? - Very preliminary exploratory data analysis, including some summary statistics and visualizations, along with some explanation on how they help you learn more about your data. (You can add to these later as you work on your project.) - The data visualization(s) that you believe will be useful in exploring your question(s). (You can update these later as you work on your project.)
+=======
+print(glimpse(ai_data))
+print(spec(ai_data))
+
+```
+
+```{r variables-renaming}
+AI_Hallucination_Cases_renamed_variables <- as_tibble(ai_data) |>
+  rename(
+    `case_name` = `Case name`,
+    `court` = `Court`,
+    `location` = `State(s)`,
+    `date` = `Date`,
+    `party(ies)` = `Party(ies)`,
+    `ai_tool` = `AI Tool`,
+    `hallucination` = `Hallucination`,
+    `outcome` = `Outcome`,
+    `monetary_penalty` = `Monetary penalty`,
+    `professional_sanction` = `Professional sanction`,
+    `key_principle` = `Key principle`,
+    `pointer` = `Pointer`,
+    `source` = `Source`,
+    `details` = `Details`
+    )
+```
+
+```{r variables-description}
+AI_Hallucination_Cases_descriptions <- tibble::tibble(
+  variable = c(
+    "case_name", "court", "location", "date", "parties", "ai_tool", "hallucination",
+    "outcome", "monetary_penalty", "professional_sanction", "key_principle",
+    "pointer", "source", "details"
+  ),
+  description = c(
+    "The official title of the legal case",
+    "The court where the case was heard",
+    "The state(s) or jurisdiction(s) where the case took place",
+    "The date when the decision or event related to AI hallucination occurred",
+    "The party responsible for using AI-generated or hallucinated content",
+    "The AI system or model involved in producing hallucinated content",
+    "The nature or type of AI hallucination observed",
+    "The court’s decision or resulting action",
+    "Any financial fine or penalty imposed as a result of the AI hallucination",
+    "Indicates whether professional disciplinary action was taken against the party",
+    "The legal or ethical principle highlighted in the case",
+    "Reference or tag connecting the case to a commentary or analysis",
+    "The source link or reference to the full legal decision, article, or document",
+    "Additional contextual information or editor’s note summarizing the case background"
+  )
+)
+
+```
+
+
+## 3. Data analysis plan
+
+Text goes here.
+- What variables will you visualize to explore your research questions?
+case_name
+court
+location
+parties
+ai_tool
+hallucination
+outcome
+monetary_penatly
+professional_sanction
+details
+
+- Will there be any other data that you need to find to help with your research question?
+
+
+- Very preliminary exploratory data analysis, including some summary statistics and visualizations, along with some explanation on how they help you learn more about your data. (You can add to these later as you work on your project.)
+- The data visualization(s) that you believe will be useful in exploring your question(s). (You can update these later as you work on your project.)
+
+>>>>>>> 5613856617af10f8833228f9377d3efe0c466545
 
 ```{r}
 # Code goes here
