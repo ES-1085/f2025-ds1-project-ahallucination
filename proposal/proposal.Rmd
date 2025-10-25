@@ -108,8 +108,6 @@ AI_Hallucination_Cases_descriptions <- tibble::tibble(
 ```
 
 
-
-
 ```{r}
 # Code goes here
 # Code to calculate summary statistics
