@@ -7,6 +7,9 @@ output: github_document
 ```{r load-packages, message = FALSE}
 library(tidyverse)
 library(broom)
+library(dplyr)
+library(stringr)
+library(readr)
 ai_data <- read_csv("../data/Charlotin-hallucination_cases.csv")
 #view(ai_data)
 ```
@@ -20,11 +23,6 @@ We found our data set on Kaggle, and it was contributed by a man named Damien Ch
 4. What AI hallucinations have a higher monetary penalty?
 5. What effect did the party type have on the outcome and monetary penalty within each case?
 
-<<<<<<< HEAD
-Text goes here. Refer to the Markdown Quick Reference: Help -\> Markdown Quick Reference.
-=======
->>>>>>> 5613856617af10f8833228f9377d3efe0c466545
-
 ## 2. Data
 
 Text goes here. Place your data in the /data folder, and add dimensions and codebook to the README in that folder. Then print out the output of glimpse() or skim() of your data frame.
@@ -34,8 +32,6 @@ Text goes here. Place your data in the /data folder, and add dimensions and code
 # Read in your data file
 # Print the output of glimpse() or skim()
 ai_data <- read_csv("../data/Charlotin-hallucination_cases.csv")
-<<<<<<< HEAD
-
 ```
 
 ## 3. Data analysis plan
@@ -50,20 +46,20 @@ print(spec(ai_data))
 ```{r variables-renaming}
 AI_Hallucination_Cases_renamed_variables <- as_tibble(ai_data) |>
   rename(
-    `case_name` = `Case name`,
-    `court` = `Court`,
-    `location` = `State(s)`,
-    `date` = `Date`,
-    `party(ies)` = `Party(ies)`,
-    `ai_tool` = `AI Tool`,
-    `hallucination` = `Hallucination`,
-    `outcome` = `Outcome`,
-    `monetary_penalty` = `Monetary penalty`,
-    `professional_sanction` = `Professional sanction`,
-    `key_principle` = `Key principle`,
-    `pointer` = `Pointer`,
-    `source` = `Source`,
-    `details` = `Details`
+    case_name = `Case name`,
+    court = `Court`,
+    location = `State(s)`,
+    date = `Date`,
+    party(ies) = `Party(ies)`,
+    ai_tool = `AI Tool`,
+    hallucination = `Hallucination`,
+    outcome = `Outcome`,
+    monetary_penalty = `Monetary penalty`,
+    professional_sanction = `Professional sanction`,
+    key_principle = `Key principle`,
+    pointer = `Pointer`,
+    source = `Source`,
+    details = `Details`
     )
 ```
 
@@ -91,6 +87,39 @@ AI_Hallucination_Cases_descriptions <- tibble::tibble(
     "Additional contextual information or editor’s note summarizing the case background"
   )
 )
+
+```
+
+```{r}
+
+grep("\\$|€|£|USD|EUR|GBP", unlist(data), value = TRUE)
+
+data <- data %>%
+  mutate(currency = case_when(
+    str_detect(Penalty, "€|EUR") ~ "EUR",
+    str_detect(Penalty, "£|GBP") ~ "GBP",
+    str_detect(Penalty, "\\$|USD") ~ "USD",
+    TRUE ~ "USD"
+  )) %>%
+  mutate(Penalty_num = str_to_lower(Penalty),
+         Penalty_num = str_replace_all(Penalty_num, ",", ""),
+         Penalty_num = str_replace_all(Penalty_num, "[^0-9\\.]", ""),
+         Penalty_num = as.numeric(Penalty_num))
+
+data <- data %>%
+  mutate(multiplier = case_when(
+    str_detect(Penalty, "million") ~ 1e6,
+    str_detect(Penalty, "billion") ~ 1e9,
+    str_detect(Penalty, "thousand") ~ 1e3,
+    TRUE ~ 1
+  ),
+  Penalty_num = Penalty_num * multiplier)
+
+exchange_rates <- c(USD = 1, EUR = 1.09, GBP = 1.27)
+data <- data %>%
+  mutate(Penalty_USD = round(Penalty_num * exchange_rates[currency], 2))
+
+write_csv(data, "Charlotin_hallucination_cases_cleaned.csv")
 
 ```
 
