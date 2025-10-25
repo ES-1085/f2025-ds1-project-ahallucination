@@ -28,7 +28,17 @@ glimpse() or skim() of your data frame.
 # Code goes here
 # Read in your data file
 # Print the output of glimpse() or skim()
+ai_data <- read_csv("../data/Charlotin-hallucination_cases.csv")
 ```
+
+    ## Rows: 426 Columns: 14
+    ## ── Column specification ────────────────────────────────────────────────────────
+    ## Delimiter: ","
+    ## chr  (13): Case Name, Court, State(s), Party(ies), AI Tool, Hallucination, O...
+    ## date  (1): Date
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
 ## 3. Data analysis plan
 
