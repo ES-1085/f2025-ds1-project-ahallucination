@@ -14,6 +14,7 @@ ai_data <- read_csv("../data/Charlotin-hallucination_cases.csv")
 ## 1. Introduction
 
 We found our data set on Kaggle, and it was contributed by a man named Damien Charlotin. He is a senior research fellow, specifically on artificial intelligence and the law. He is also a lecturer and independent practitioner in Paris. The AI hallucinations dataset contains cases from across the world from 2023 to 2025. The dataset keeps a record of legal cases in which AI was used and found to be wrong. Generative AI produced incorrect citations as well as other fake arguments. The dataset contains the case, the type of hallucination, the type of AI, the outcome of the case, the monetary penalty, the state, the time, etc. Our data is set up nicely, where each observation directly translates to a specific court case that is listed by name. The study in which the data was collected is relatively new. There are currently 426 cases where generative AI has been used, however, this dataset is still expanding as more come to light. Note that this study is a work in progress and doesn’t contain all court cases in which AI was used. It is noted on Kaggle that the data will be updated annually with new findings. We were mainly interested in when these cases started emerging, what forms of AI were being used the most, and how some of our variables like party and hallucination type, affect monetary penalty.Some of our research questions we want to examine further are:
+
 1. Which states come up the most with AI hallucinations?
 2. What LLM is being used the most?
 3. What year did cases start to spike? 
@@ -89,8 +90,12 @@ As of now, we don't think so. However, we might need to find other data as we ex
 ```
 
 ```{r visualizations}
-ai_data |>
-ggplot(aes(x = party, y = outcome)) +
-geom_line()
+library(dplyr)
+word_counts <- ai_data %>%
+  count(ai_tool, sort = TRUE)
 
+ggplot(word_counts[1:10,], aes(x = reorder(ai_tool, n), y = n)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Top AI Tools Used", x = "AI Tool", y = "Frequency")
 ```
