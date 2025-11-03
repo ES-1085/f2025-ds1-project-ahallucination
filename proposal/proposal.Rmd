@@ -26,58 +26,44 @@ We found our data set on Kaggle, and it was contributed by a man named Damien Ch
 ```{r}
 ai_data <- read_csv("../data/Charlotin-hallucination_cases.csv")
 glimpse(ai_data)
-
 ```
-```{r variables-renaming}
+
+```{r rename-variables}
 AI_Hallucination_Cases_renamed_variables <- as_tibble(ai_data) |>
   rename(
-    `case_name` = `Case name`,
-    `court` = `Court`,
-    `state` = `State`,
-    `date` = `Date`,
-    `party(ies)` = `Party(ies)`,
-    `ai_tool` = `AI Tool`,
-    `hallucination` = `Hallucination`,
-    `outcome` = `Outcome`,
-    `monetary_penalty` = `Monetary penalty`,
-    `professional_sanction` = `Professional sanction`,
-    `key_principle` = `Key principle`,
-    `pointer` = `Pointer`,
-    `source` = `Source`,
-    `details` = `Details`
-    )
-```
-
-```{r variables-description}
-AI_Hallucination_Cases_descriptions <- tibble::tibble(
-  variable = c(
-    "case_name", "court", "state", "date", "parties", "ai_tool", "hallucination",
-    "outcome", "monetary_penalty", "professional_sanction", "key_principle",
-    "pointer", "source", "details"
-  ),
-  description = c(
-    "The official title of the legal case",
-    "The court where the case was heard",
-    "The state(s) or jurisdiction(s) where the case took place",
-    "The date when the decision or event related to AI hallucination occurred",
-    "The party responsible for using AI-generated or hallucinated content",
-    "The AI system or model involved in producing hallucinated content",
-    "The nature or type of AI hallucination observed",
-    "The court’s decision or resulting action",
-    "Any financial fine or penalty imposed as a result of the AI hallucination",
-    "Indicates whether professional disciplinary action was taken against the party",
-    "The legal or ethical principle highlighted in the case",
-    "Reference or tag connecting the case to a commentary or analysis",
-    "The source link or reference to the full legal decision, article, or document",
-    "Additional contextual information or editor’s note summarizing the case background"
-  )
+`case_name` = `Case Name`,
+`court` = `Court`,
+`state` = `State(s)`,
+ `date` = `Date`,
+`party` = `Party(ies)`,
+`ai_tool` = `AI Tool`,
+`hallucination` = `Hallucination`,
+`outcome` = `Outcome`,
+`monetary_penalty` = `Monetary Penalty`,
+`professional_sanction` = `Professional Sanction`,
+`key_principle` = `Key Principle`,
+`pointer` = `Pointer`,
+`source` = `Source`,
+`details` = `Details`
 )
-
 ```
+
+
+```{r dimensions}
+print(dim(ai_data))
+```
+
+```{r glimpse}
+print(glimpse(ai_data))
+```
+
+```{r specs}
+print(spec(ai_data))
+```
+
 
 ## 3. Data analysis plan
 
-Text goes here. 
 - What variables will you visualize to explore your research questions? 
 case_name
 court
@@ -95,13 +81,8 @@ As of now, we don't think so. However, we might need to find other data as we ex
 - Very preliminary exploratory data analysis, including some summary statistics and visualizations, along with some explanation on how they help you learn more about your data. (You can add to these later as you work on your project.) 
 - The data visualization(s) that you believe will be useful in exploring your question(s). (You can update these later as you work on your project.)
 
-print(glimpse(ai_data))
-print(spec(ai_data))
 
+```{r visualizations}
 
-
-```{r}
-# Code goes here
-# Code to calculate summary statistics
-# Code for a visualization
 ```
+
