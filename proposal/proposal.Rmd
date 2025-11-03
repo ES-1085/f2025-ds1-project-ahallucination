@@ -30,7 +30,7 @@ glimpse(ai_data)
 ```
 
 ```{r rename-variables}
-AI_Hallucination_Cases_renamed_variables <- as_tibble(ai_data) |>
+ai_data <- as_tibble(ai_data) |>
   rename(
 `case_name` = `Case Name`,
 `court` = `Court`,
@@ -83,7 +83,14 @@ As of now, we don't think so. However, we might need to find other data as we ex
 - Very preliminary exploratory data analysis, including some summary statistics and visualizations, along with some explanation on how they help you learn more about your data. (You can add to these later as you work on your project.) 
 - The data visualization(s) that you believe will be useful in exploring your question(s). (You can update these later as you work on your project.)
 
+```{r summary_stats}
+
+
+```
 
 ```{r visualizations}
+ai_data |>
+ggplot(aes(x = party, y = outcome)) +
+geom_line()
 
 ```
