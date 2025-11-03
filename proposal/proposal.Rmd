@@ -35,7 +35,6 @@ AI_Hallucination_Cases_renamed_variables <- as_tibble(ai_data) |>
 `case_name` = `Case Name`,
 `court` = `Court`,
 `state` = `State(s)`,
- `date` = `Date`,
 `date` = `Date`,
 `party` = `Party(ies)`,
 `ai_tool` = `AI Tool`,
