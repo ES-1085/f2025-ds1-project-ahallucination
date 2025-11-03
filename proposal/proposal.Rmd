@@ -151,7 +151,19 @@ print(spec(ai_data))
 
 -   What variables will you visualize to explore your research questions?
 
-court location ai_tool hallucination outcome monetary_penatly professional_sanction
+court -> We will explore whether or not any patterns arise between the specific court and the severity of the punishment, or rather if there are certain courts that try more ai hallucination cases than others
+
+location -> We will observe if there is any relationship between location and the frequency of cases
+
+ai_tool -> Do certain ai tools/softwares appear in these cases more often? Are certain awarded larger penalties?
+
+hallucination -> What were the most common hallucinations in these cases? Were there specific ai tools that were ore often responsible for certain hallucinations?
+
+outcome -> What were the most common outcomes for these cases, and do they vary by location, ai tool used, court tries in, or the specific hallucination?
+
+monetary_penatly -> What was the range of monetary penalties for these cases? What is considered on the high end and what hallucinations led to these penalties?
+
+professional_sanction -> What is the relationship between monetary penalty and whether or not professional disciplinary action was taken against the party involved?
 
 -   Will there be any other data that you need to find to help with your research question?
 
