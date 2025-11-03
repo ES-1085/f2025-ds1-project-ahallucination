@@ -27,11 +27,6 @@ We found our data set on Kaggle, and it was contributed by a man named Damien Ch
 ```{r}
 ai_data <- read_csv("../data/Charlotin-hallucination_cases.csv")
 glimpse(ai_data)
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 5b0595cd94827e292a5ab0c13bea0d8258adbd84
 ```
 
 ```{r rename-variables}
@@ -87,24 +82,7 @@ As of now, we don't think so. However, we might need to find other data as we ex
 
 - Very preliminary exploratory data analysis, including some summary statistics and visualizations, along with some explanation on how they help you learn more about your data. (You can add to these later as you work on your project.) 
 - The data visualization(s) that you believe will be useful in exploring your question(s). (You can update these later as you work on your project.)
-<<<<<<< HEAD
-=======
-print(glimpse(ai_data))
-print(spec(ai_data))
-=======
-
->>>>>>> 5b0595cd94827e292a5ab0c13bea0d8258adbd84
 
 ```{r visualizations}
 
-```
-
-<<<<<<< HEAD
-```{r}
-# Code goes here
-# Code to calculate summary statistics
-# Code for a visualization
-```
-=======
->>>>>>> 5b0595cd94827e292a5ab0c13bea0d8258adbd84
 ```
