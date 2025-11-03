@@ -83,6 +83,7 @@ As of now, we don't think so. However, we might need to find other data as we ex
 - Very preliminary exploratory data analysis, including some summary statistics and visualizations, along with some explanation on how they help you learn more about your data. (You can add to these later as you work on your project.) 
 - The data visualization(s) that you believe will be useful in exploring your question(s). (You can update these later as you work on your project.)
 
+
 ```{r visualizations}
 
 ```
