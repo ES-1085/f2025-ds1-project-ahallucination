@@ -81,6 +81,7 @@ outcome
 monetary_penatly
 professional_sanction
 details
+
 - Will there be any other data that you need to find to help with your research question? 
 As of now, we don't think so. However, we might need to find other data as we explore our research questions further.
 
@@ -106,3 +107,4 @@ print(spec(ai_data))
 ```
 =======
 >>>>>>> 5b0595cd94827e292a5ab0c13bea0d8258adbd84
+```
