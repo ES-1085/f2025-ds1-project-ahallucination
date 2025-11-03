@@ -17,10 +17,13 @@
 - `source`: The source link or reference to the full legal decision, article, or document.
 - `details`: Additional contextual information or editor’s note summarizing the case background.
 
+
 [1] 426  14
 
 Rows: 426
 Columns: 14
+
+glimpse():
 
 $ Case Name             <chr> "The People v. Raziel Ruiz Alvarez", "In the Interest of R.A.", "In re …
 
