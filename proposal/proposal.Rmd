@@ -15,20 +15,15 @@ ai_data <- read_csv("../data/Charlotin-hallucination_cases.csv")
 
 We found our data set on Kaggle, and it was contributed by a man named Damien Charlotin. He is a senior research fellow, specifically on artificial intelligence and the law. He is also a lecturer and independent practitioner in Paris. The AI hallucinations dataset contains cases from across the world from 2023 to 2025. The dataset keeps a record of legal cases in which AI was used and found to be wrong. Generative AI produced incorrect citations as well as other fake arguments. The dataset contains the case, the type of hallucination, the type of AI, the outcome of the case, the monetary penalty, the state, the time, etc. Our data is set up nicely, where each observation directly translates to a specific court case that is listed by name. A LLM refers to a “large language model”. This represents the type of AI used whether it was chat GPT, Gemini, etc. A hallucination is when one of these LLMs basically produces an incorrect output or provides the user with something nonsensical. Our data also includes a variable, monetary penalty, which lists how much each “error” in a specific LLM is penalized. The study in which the data was collected is relatively new. There are currently 426 cases where generative AI has been used, however, this dataset is still expanding as more come to light. Note that this study is a work in progress and doesn’t contain all court cases in which AI was used. It is noted on Kaggle that the data will be updated annually with new findings. We were mainly interested in when these cases started emerging, what forms of AI were being used the most, and how some of our variables like party and hallucination type, affect monetary penalty.Some of our research questions we want to examine further are:
 
-1. Which states come up the most with AI hallucinations?
-2. What LLM is being used the most?
-3. What year did cases start to spike? 
-4. What AI hallucinations have a higher monetary penalty?
-5. What effect did the party type have on the outcome and monetary penalty within each case?
-
-
+1.  Which states come up the most with AI hallucinations?
+2.  What LLM is being used the most?
+3.  What year did cases start to spike?
+4.  What AI hallucinations have a higher monetary penalty?
+5.  What effect did the party type have on the outcome and monetary penalty within each case?
 
 ## 2. Data
 
-```{r}
-ai_data <- read_csv("../data/Charlotin-hallucination_cases.csv")
-glimpse(ai_data)
-```
+**Renaming Variables**
 
 ```{r rename-variables}
 ai_data <- as_tibble(ai_data) |>
@@ -50,6 +45,95 @@ ai_data <- as_tibble(ai_data) |>
 )
 ```
 
+**Data Cleanup**
+
+Since we have very little numerical data, we need to first clean up our dataset before we visualize. We focused specifically on cleaning the variables we are analyzing: court, location, ai_tool, hallucination, outcome, monetary_penalty.
+
+First, we removed all extra spaces, standardized the capitalization, and converted all empty observations to NA for all of our variables of interest. Next, we did the same focusing specifically on ai_tool, splitting rows based on common separators such as slashes, colons, and commas. After tidying these data, we accounted for synonyms, and finally did a wordcount for each of the tools mentioned. Then, we focused specifically on monetary_penalty, and removed all non-numeric characters, replaced any text indicative of a missing value with NA, and turned the numbers into an actual number type. Finally, for the variables hallucination, outcome, and professional_sanction, we used keywords to group text (ignoring capitalization) and replace it with a standard word or phrase.
+
+```{r data-cleanup}
+ai_data <- ai_data |>
+  mutate(
+    across(
+      c(court, state, hallucination, outcome, monetary_penalty, professional_sanction), ~ .x |>
+        str_squish() |>
+        str_to_title() |>
+        na_if("")
+    ),
+monetary_penalty = monetary_penalty |>
+      str_replace_all("[\\$,]", "") |>
+      str_replace_all("(?i)none|n/a|na", NA_character_) |>
+      as.numeric()
+)
+```
+
+```{r ai-tool-tidy}
+ai_tool_tidy <- ai_data |>
+  mutate(ai_tool = str_replace_all(ai_tool, " and | & ", ",")) |>
+  separate_rows(ai_tool, sep = ",|/|;") |>
+  mutate(ai_tool = str_squish(ai_tool),
+         ai_tool = na_if(ai_tool, ""),
+         ai_tool = if_else(str_to_lower(ai_tool) %in% c("n/a","na","none"), NA_character_, ai_tool)) |>
+  drop_na(ai_tool)
+```
+
+```{r ai-tool-synonyms}
+
+synonyms <- c(
+  "ChatGPT" = "OpenAI ChatGPT",
+  "GPT-4" = "OpenAI ChatGPT",
+  "GPT4" = "OpenAI ChatGPT",
+  "Bard" = "Google Bard / Gemini",
+  "Gemini" = "Google Bard / Gemini",
+  "Claude" = "Anthropic Claude"
+)
+ai_tool_tidy <- ai_tool_tidy |>
+  mutate(ai_tool = coalesce(synonyms[ai_tool], ai_tool))
+
+```
+
+```{r ai-tool-word-counts}
+word_counts <- ai_tool_tidy |>
+  count(ai_tool, name = "freq", sort = TRUE)
+```
+
+```{r mutate-variables}
+ai_data <- ai_data |>
+  mutate(
+    hallucination = case_when(
+      str_detect(coalesce(hallucination, ""), regex("citation", ignore_case = TRUE)) ~ "Fake Citation",
+      str_detect(coalesce(hallucination, ""), regex("argument",  ignore_case = TRUE)) ~ "Fake Argument",
+      str_detect(coalesce(hallucination, ""), regex("quote|source", ignore_case = TRUE)) ~ "Fake Source/Quote",
+      TRUE ~ hallucination
+    )
+  )
+ai_data <- ai_data |>
+  mutate(
+    hallucination = case_when(
+      str_detect(hallucination, regex("citation", ignore_case = TRUE)) ~ "Fake Citation",
+      str_detect(hallucination, regex("argument", ignore_case = TRUE)) ~ "Fake Argument",
+      str_detect(hallucination, regex("quote|source", ignore_case = TRUE)) ~ "Fake Source/Quote",
+      TRUE ~ hallucination
+    )
+  )
+ai_data <- ai_data |>
+  mutate(
+    outcome = case_when(
+      str_detect(outcome, regex("dismissed|thrown out", ignore_case = TRUE)) ~ "Dismissed",
+      str_detect(outcome, regex("pending|ongoing", ignore_case = TRUE)) ~ "Pending",
+      str_detect(outcome, regex("fined|sanction|penalty", ignore_case = TRUE)) ~ "Penalized",
+      TRUE ~ outcome
+    )
+  )
+ai_data <- ai_data |>
+  mutate(
+    professional_sanction = case_when(
+      str_detect(professional_sanction, regex("yes|y", ignore_case = TRUE)) ~ "Yes",
+      str_detect(professional_sanction, regex("no|n", ignore_case = TRUE)) ~ "No",
+      TRUE ~ professional_sanction
+    )
+  )
+```
 
 ```{r dimensions}
 print(dim(ai_data))
@@ -63,39 +147,45 @@ print(glimpse(ai_data))
 print(spec(ai_data))
 ```
 
-
 ## 3. Data analysis plan
 
-- What variables will you visualize to explore your research questions? 
-case_name
-court
-location
-parties
-ai_tool
-hallucination
-outcome
-monetary_penatly
-professional_sanction
-details
+-   What variables will you visualize to explore your research questions?
 
-- Will there be any other data that you need to find to help with your research question? 
+court location ai_tool hallucination outcome monetary_penatly professional_sanction
+
+-   Will there be any other data that you need to find to help with your research question?
+
 As of now, we don't think so. However, we might need to find other data as we explore our research questions further.
 
-- Very preliminary exploratory data analysis, including some summary statistics and visualizations, along with some explanation on how they help you learn more about your data. (You can add to these later as you work on your project.) 
-- The data visualization(s) that you believe will be useful in exploring your question(s). (You can update these later as you work on your project.)
+## 3. Preliminary Visualizations
+
+**Summary Statistics**
 
 ```{r summary_stats}
-
-
+summary(ai_data$monetary_penalty)
 ```
+
+**Preliminary Visualization**
 
 ```{r visualizations}
 library(dplyr)
-word_counts <- ai_data %>%
+word_counts <- ai_data |>
   count(ai_tool, sort = TRUE)
 
-ggplot(word_counts[1:10,], aes(x = reorder(ai_tool, n), y = n)) +
-  geom_col() +
+ggplot(ai_data, aes(x = monetary_penalty)) +
+  geom_histogram(bins = 30, fill = "red", color = "white") +
+  labs(title = "Distribution of Monetary Penalties",
+       x = "Penalty Amount (USD)", y = "Number of Cases") +
+  theme_minimal()
+
+ai_data |>
+  count(state, sort = TRUE) |>
+  slice_max(n, n = 10) |>
+  ggplot(aes(x = reorder(state, n), y = n)) +
+  geom_col(fill = "pink") +
   coord_flip() +
-  labs(title = "Top AI Tools Used", x = "AI Tool", y = "Frequency")
+  labs(title = "Top 10 States by Number of AI Hallucination Cases",
+       x = "State", y = "Number of Cases") +
+  theme_minimal()
+
 ```
