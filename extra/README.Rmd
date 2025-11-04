@@ -1,4 +1,6 @@
 ```{r most hallucination cases by state}
+## Drop NA values
+
 state_summary <- ai_data |>
 count(state, name = "num_cases", sort = TRUE)
 
@@ -37,11 +39,14 @@ ai_tools <- ai_data |>
 llm_summary <- ai_tools |>
   count(ai_tool, name = "freq", sort = TRUE)
 
-# Determine a nice step size for breaks dynamically
-max_freq <- max(llm_summary$freq, na.rm = TRUE)
-step <- ceiling(max_freq / 5)  # about 5 ticks across axis
+llm_top <- llm_summary |> 
+  head(10)
 
-ggplot(llm_summary |> slice_max(freq, n = 10),
+# Top 10 LLM frequency plot
+max_freq <- max(llm_summary$freq, na.rm = TRUE)
+step <- ceiling(max_freq / 5)  
+
+ggplot(llm_top |> slice_max(freq, n = 10),
        aes(x = reorder(ai_tool, freq), y = freq)) +
   geom_col(fill = "#69b3a2") +
   coord_flip() +
@@ -61,9 +66,35 @@ ggplot(llm_summary |> slice_max(freq, n = 10),
     panel.grid.minor = element_blank(),
   )
 
+# All LLM frequency plot
+max_freq <- max(llm_summary$freq, na.rm = TRUE)
+step <- ceiling(max_freq / 5)  # ticks across axis
+
+ggplot(llm_summary |> slice_max(freq, n = 10),
+       aes(x = reorder(ai_tool, freq), y = freq)) +
+  geom_col(fill = "#69b3a2") +
+  coord_flip() +
+  scale_y_continuous(
+    breaks = seq(0, max_freq, by = step),  # manually control tick spacing
+    labels = comma_format()
+  ) +
+  labs(
+    title = "AI Tools Involved in Hallucination Cases",
+    x = "AI Tool",
+    y = "Frequency"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.y = element_text(size = 10),
+    axis.text.x = element_text(size = 9),
+    panel.grid.minor = element_blank(),
+  )
+
 ```
 
 ```{r timeline of increase in cases}
+
+## Maybe separate into different LLM types - so we can see the spike in usage for each LLM
 library(scales)
 
 ai_data |>
