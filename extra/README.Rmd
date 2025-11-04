@@ -1,4 +1,87 @@
-```{r load-packages, message = FALSE}
-library(tidyverse)
-library(broom)
+```{r most hallucination cases by state}
+state_summary <- ai_data |>
+count(state, name = "num_cases", sort = TRUE)
+
+ggplot(state_summary |> slice_max(num_cases, n = 10),
+aes(x = reorder(state, num_cases), y = num_cases)) +
+geom_col(fill = "#FF9999") +
+coord_flip() +
+labs(title = "Top 10 States by Number of AI Hallucination Cases",
+x = "State", y = "Number of Cases") +
+theme_minimal()
+
 ```
+```{r most hallucination cases by state table}
+state_summary |> arrange(desc(num_cases)) |> head(15)
+
+```
+
+
+```{r most used ai tools}
+library(scales)
+
+ai_tools <- ai_data |>
+  separate_rows(ai_tool, sep = ",|/|;") |>
+  mutate(
+    ai_tool = str_squish(ai_tool),
+    ai_tool = recode(ai_tool,
+      "Chatgpt" = "OpenAI ChatGPT",
+      "Gpt4" = "OpenAI ChatGPT",
+      "Bard" = "Google Bard / Gemini",
+      "Gemini" = "Google Bard / Gemini",
+      "Claude" = "Anthropic Claude"
+    )
+  ) |>
+  drop_na(ai_tool)
+
+llm_summary <- ai_tools |>
+  count(ai_tool, name = "freq", sort = TRUE)
+
+# Determine a nice step size for breaks dynamically
+max_freq <- max(llm_summary$freq, na.rm = TRUE)
+step <- ceiling(max_freq / 5)  # about 5 ticks across axis
+
+ggplot(llm_summary |> slice_max(freq, n = 10),
+       aes(x = reorder(ai_tool, freq), y = freq)) +
+  geom_col(fill = "#69b3a2") +
+  coord_flip() +
+  scale_y_continuous(
+    breaks = seq(0, max_freq, by = step),  # manually control tick spacing
+    labels = comma_format()
+  ) +
+  labs(
+    title = "Top 10 AI Tools Involved in Hallucination Cases",
+    x = "AI Tool",
+    y = "Frequency"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.y = element_text(size = 10),
+    axis.text.x = element_text(size = 9),
+    panel.grid.minor = element_blank(),
+  )
+
+```
+
+```{r timeline of increase in cases}
+library(scales)
+
+ai_data |>
+mutate(year = lubridate::year(date)) |>
+count(year) |>
+ggplot(aes(x = year, y = n)) +
+geom_line(linewidth = 1.2, color = "#FF6666") +
+geom_point(size = 2) +
+scale_x_continuous(breaks = pretty_breaks()) +
+labs(title = "Trend of AI Hallucination Cases Over Time",
+x = "Year", y = "Number of Cases") +
+theme_minimal()
+
+```
+
+```{r}
+
+```
+
+
+
