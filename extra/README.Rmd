@@ -2,7 +2,8 @@
 ## Drop NA values
 
 state_summary <- ai_data |>
-count(state, name = "num_cases", sort = TRUE)
+  drop_na(state) |>
+  count(state, name = "num_cases", sort = TRUE)
 
 ggplot(state_summary |> slice_max(num_cases, n = 10),
 aes(x = reorder(state, num_cases), y = num_cases)) +
