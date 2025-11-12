@@ -28,11 +28,17 @@ ai_tools <- ai_data |>
   mutate(
     ai_tool = str_squish(ai_tool),
     ai_tool = recode(ai_tool,
-      "Chatgpt" = "OpenAI ChatGPT",
-      "Gpt4" = "OpenAI ChatGPT",
-      "Bard" = "Google Bard / Gemini",
-      "Gemini" = "Google Bard / Gemini",
-      "Claude" = "Anthropic Claude"
+      "ChatGPT" = "OpenAI ChatGPT",
+      "GPT-4" = "OpenAI ChatGPT",
+      "GPT4" = "OpenAI ChatGPT",
+      "Google Gemini" = "Gemini",
+      "Google Bard" = "Gemini",
+      "Bard" = "Gemini",
+      "Claude" = "Anthropic Claude",
+      "implied" = "Implied",
+      "Copilot" = "MS Copilot",
+      "Microsoft CoPilot" = "MS Copilot",
+      "CoPilot" = "MS Copilot"
     )
   ) |>
   drop_na(ai_tool)

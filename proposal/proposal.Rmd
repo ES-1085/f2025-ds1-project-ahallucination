@@ -55,16 +55,39 @@ First, we removed all extra spaces, standardized the capitalization, and convert
 ai_data <- ai_data |>
   mutate(
     across(
-      c(court, state, hallucination, outcome, monetary_penalty, professional_sanction), ~ .x |>
-        str_squish() |>
-        str_to_title() |>
-        na_if("")
-    ),
-monetary_penalty = monetary_penalty |>
-      str_replace_all("[\\$,]", "") |>
-      str_replace_all("(?i)none|n/a|na", NA_character_) |>
-      as.numeric()
+      c(court, state, hallucination, outcome, monetary_penalty, professional_sanction),
+      ~ .x |> str_squish() |> str_to_title() |> na_if("")
+    )
+  )
+
+rates <- tibble::tribble(
+  ~currency, ~rate_to_usd,
+  "USD", 1,
+  "EUR", 1.07,
+  "GBP", 1.24,
+  "CAD", 0.73
 )
+
+ai_data <- ai_data %>% 
+  mutate(currency = "USD")
+
+
+monetary_penalty_tidy <- ai_data %>%
+  mutate(
+    monetary_penalty = str_replace_all(monetary_penalty, "[$,]", ""),
+    monetary_penalty = na_if(monetary_penalty, "none"),
+    monetary_penalty = na_if(monetary_penalty, "n/a"),
+    monetary_penalty = na_if(monetary_penalty, "na"),
+    monetary_penalty = na_if(monetary_penalty, "N/A"),
+    monetary_penalty = as.numeric(monetary_penalty)
+  )
+
+monetary_penalty_usd <- monetary_penalty_tidy %>%
+  mutate(
+    monetary_penalty_usd = if_else(str_to_upper(currency) == "USD",
+                                   monetary_penalty,
+                                   NA_real_)
+  )
 ```
 
 ```{r ai-tool-tidy}
@@ -83,9 +106,14 @@ synonyms <- c(
   "ChatGPT" = "OpenAI ChatGPT",
   "GPT-4" = "OpenAI ChatGPT",
   "GPT4" = "OpenAI ChatGPT",
-  "Bard" = "Google Bard / Gemini",
-  "Gemini" = "Google Bard / Gemini",
-  "Claude" = "Anthropic Claude"
+  "Google Gemini" = "Gemini",
+  "Google Bard" = "Gemini",
+  "Bard" = "Gemini",
+  "Claude" = "Anthropic Claude",
+  "implied" = "Implied",
+  "Copilot" = "MS Copilot",
+  "Microsoft CoPilot" = "MS Copilot",
+  "CoPilot" = "MS Copilot"
 )
 ai_tool_tidy <- ai_tool_tidy |>
   mutate(ai_tool = coalesce(synonyms[ai_tool], ai_tool))
@@ -180,15 +208,21 @@ summary(ai_data$monetary_penalty)
 **Preliminary Visualization**
 
 ```{r visualizations}
-library(dplyr)
+
+ai_data$monetary_penalty <- as.numeric(ai_data$monetary_penalty)
+
 word_counts <- ai_data |>
   count(ai_tool, sort = TRUE)
 
 ggplot(ai_data, aes(x = monetary_penalty)) +
   geom_histogram(bins = 30, fill = "red", color = "white") +
-  labs(title = "Distribution of Monetary Penalties",
-       x = "Penalty Amount (USD)", y = "Number of Cases") +
+  labs(
+    title = "Distribution of Monetary Penalties",
+    x = "Penalty Amount (USD)",
+    y = "Number of Cases"
+  ) +
   theme_minimal()
+
 
 ai_data |>
   count(state, sort = TRUE) |>
