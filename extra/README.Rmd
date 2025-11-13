@@ -2,8 +2,7 @@
 ## Drop NA values
 
 state_summary <- ai_data |>
-  drop_na(state) |>
-  count(state, name = "num_cases", sort = TRUE)
+count(state, name = "num_cases", sort = TRUE)
 
 ggplot(state_summary |> slice_max(num_cases, n = 10),
 aes(x = reorder(state, num_cases), y = num_cases)) +
@@ -28,17 +27,11 @@ ai_tools <- ai_data |>
   mutate(
     ai_tool = str_squish(ai_tool),
     ai_tool = recode(ai_tool,
-      "ChatGPT" = "OpenAI ChatGPT",
-      "GPT-4" = "OpenAI ChatGPT",
-      "GPT4" = "OpenAI ChatGPT",
-      "Google Gemini" = "Gemini",
-      "Google Bard" = "Gemini",
-      "Bard" = "Gemini",
-      "Claude" = "Anthropic Claude",
-      "implied" = "Implied",
-      "Copilot" = "MS Copilot",
-      "Microsoft CoPilot" = "MS Copilot",
-      "CoPilot" = "MS Copilot"
+      "Chatgpt" = "OpenAI ChatGPT",
+      "Gpt4" = "OpenAI ChatGPT",
+      "Bard" = "Google Bard / Gemini",
+      "Gemini" = "Google Bard / Gemini",
+      "Claude" = "Anthropic Claude"
     )
   ) |>
   drop_na(ai_tool)
@@ -117,7 +110,12 @@ theme_minimal()
 
 ```
 
-```{r}
+```{r violinplot}
+ai_data |>
+ggplot(aes(x = monetary_penalty, y = hallucination, fill = monetary_penalty)) +
+  geom_violin(trim = FALSE) +
+  theme_minimal() +
+  theme(legend.position = "none")
 
 ```
 
