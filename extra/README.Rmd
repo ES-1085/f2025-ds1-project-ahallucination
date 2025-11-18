@@ -39,6 +39,8 @@ ai_tools <- ai_data |>
       "Copilot" = "MS Copilot",
       "Microsoft CoPilot" = "MS Copilot",
       "CoPilot" = "MS Copilot"
+      "CoPilot" = "MS Copilot",
+      "Internet searches" = "Internet Search"
     )
   ) |>
   drop_na(ai_tool)
