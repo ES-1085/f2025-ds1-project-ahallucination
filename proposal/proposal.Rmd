@@ -275,6 +275,8 @@ ggplot(ai_data, aes(x = party, y = monetary_penalty, fill = party)) +
 
 
 
+
+
 ```
 
 
