@@ -137,6 +137,33 @@ theme_minimal()
 
 ```
 
+```{r top-tools, fig.alt = "Horizontal bar chart of the frequency of the top 10 most used AI tools in hallucination cases. Implied, Unidentified, and Chat GPT were used the most, with noticeably higher frequencies than the other AI tools.}
+max_freq <- max(llm_summary$freq, na.rm = TRUE)
+step <- ceiling(max_freq / 5)  
+
+ggplot(llm_top |> slice_max(freq, n = 10),
+       aes(x = reorder(ai_tool, freq), y = freq)) +
+  geom_col(fill = "#69b3a2") +
+  coord_flip() +
+  scale_y_continuous(
+    breaks = seq(0, max_freq, by = step),  # manually control tick spacing
+    labels = comma_format()
+  ) +
+  labs(
+    title = "Top 10 AI Tools Involved in Hallucination Cases",
+    x = "AI Tool",
+    y = "Frequency"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.y = element_text(size = 10),
+    axis.text.x = element_text(size = 9),
+    panel.grid.minor = element_blank(),
+  )
+
+```
+
+
 
 ```
 
