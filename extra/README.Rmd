@@ -105,6 +105,17 @@ ai_data %>%
     alpha = 0.9
   ) +
   ggtitle("Hallucination Types by AI Tool") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ai_data |>
+  count(hallucination, sort = TRUE) |>
+  slice_max(n, n = 10) |>
+  ggplot(aes(x = reorder(hallucination, n), y = n)) +
+  geom_col(fill = "grey") +
+  coord_flip() +
+  labs(title = "Frequency of AI Hallucinations",
+       x = "Type of Hallucination", y = "Frequency") +
   theme_minimal()
 ```
 
