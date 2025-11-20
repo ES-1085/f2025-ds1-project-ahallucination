@@ -126,21 +126,8 @@ word_counts <- ai_tool_tidy |>
 ```
 
 ```{r mutate-variables}
-ai_data <- ai_data |>
-  mutate(
-    hallucination = case_when(
-      str_detect(coalesce(hallucination, ""), regex("citation", ignore_case = TRUE)) ~ "Fake Citation",
-      str_detect(coalesce(hallucination, ""), regex("argument",  ignore_case = TRUE)) ~ "Fake Argument",
-      str_detect(coalesce(hallucination, ""), regex("quote|source|evidentiary|evidence", ignore_case = TRUE)) ~ "Fake Source/Quote",
-      str_detect(coalesce(hallucination, ""), regex("Caselaw|case law", ignore_case = TRUE)) ~ "Fabricated Case Law",
-      str_detect(coalesce(hallucination, ""), regex("norm", ignore_case = TRUE)) ~ "Fabricated Norm",
-      str_detect(coalesce(hallucination, ""), regex("Fabricated Cases|Fake Cases|Fake Case|Fake/Flawed Case", ignore_case = TRUE)) ~ "Fabricated Case",
-      str_detect(coalesce(hallucination, ""), regex("Misrepresented", ignore_case = TRUE)) ~ "Fabricated Norm",
-      TRUE ~ hallucination
-    )
-    
-# first is key words youre searching for, second is new name
 
+    
   )
 ai_data <- ai_data |>
   mutate(
