@@ -164,8 +164,123 @@ ggplot(llm_top |> slice_max(freq, n = 10),
 ```
 
 
+```{r monthly-stacked-area, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(lubridate)
 
+parties <- c("Pro Se Litigant", "Lawyer")
+
+month_df <- ai_data |>
+  mutate(
+    Date = as.Date(date),
+    year = year(Date)
+  ) |>
+  filter(
+    year >= 2023, year <= 2025,
+    party %in% parties
+  ) |>
+  mutate(
+    month = floor_date(Date, unit = "month")
+  ) |>
+  count(month, party, name = "n") |>
+  mutate(
+    party = factor(party, levels = c("Pro Se Litigant", "Lawyer"))
+  )
+
+max_total <- month_df |>
+  group_by(month) |>
+  summarise(total = sum(n), .groups = "drop") |>
+  summarise(max_total = max(total)) |>
+  pull(max_total)
+
+upper_lim <- ceiling((max_total + 5) / 5) * 5 
+
+ggplot(month_df,
+       aes(x = month, y = n, fill = party)) +
+  geom_area(alpha = 0.85, color = "white", linewidth = 0.2) +
+  scale_fill_brewer(palette = "Paired") +
+  scale_x_date(
+    date_breaks = "2 months",
+    date_labels = "%Y-%m",
+    expand = expansion(mult = c(0.02, 0.05))
+  ) +
+  scale_y_continuous(
+    limits = c(0, upper_lim),            
+    breaks = seq(0, upper_lim, 10), 
+    minor_breaks = seq(0, upper_lim, 5),
+    expand = expansion(mult = c(0, 0))
+  ) +
+  labs(
+    title    = "Monthly Hallucination-Related Cases (2023–2025)",
+    subtitle = "Stacked Area Plot",
+    x        = "Monthly Period",
+    y        = "Number of Cases",
+    fill     = "Party Type"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    axis.text.x   = element_text(angle = 45, hjust = 1, vjust = 1),
+    axis.title.x   = element_text(size = 9),
+    axis.title.y   = element_text(size = 9),
+    plot.title    = element_text(size = 12, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    legend.position = c(0.05, 0.9),
+    legend.justification = c("left", "top"),
+    legend.background = element_rect(fill = "white", color = NA),
+    legend.title = element_text(size = 10),
+    legend.text  = element_text(size = 9),
+    legend.key.size = unit(0.6, "lines")
+  )
 ```
 
+
+```{r bimonthly-avg-by-party, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(lubridate)
+
+# Parties to include
+parties <- c("Lawyer", "Pro Se Litigant")
+
+bi_df <- ai_data |>
+  mutate(
+    Date = as.Date(date),
+    year = year(Date)
+  ) |>
+  # keep 2023–2025 and only these two party types
+  filter(
+    year >= 2023, year <= 2025,
+    party %in% parties
+  ) |>
+  # bimonthly period (Jan–Feb, Mar–Apr, etc.)
+  mutate(
+    bimonth = floor_date(Date, unit = "2 months")
+  ) |>
+  # number of cases in each bimonthly period and party
+  count(bimonth, party, name = "avg_cases")
+
+# order parties for legend
+bi_df <- bi_df |>
+  mutate(party = factor(party, levels = parties))
+
+ggplot(bi_df, aes(x = bimonth, y = avg_cases, colour = party)) +
+  geom_line(linewidth = 0.8) +
+  geom_point(size = 2) +
+  scale_x_date(
+    date_breaks = "2 months",
+    date_labels = "%Y-%m"
+  ) +
+  labs(
+    title = "Bimonthly Average Hallucination-Related Cases (2023–2025)",
+    x = "Bimonthly Period",
+    y = "Average Number of Cases",
+    colour = NULL
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title  = element_text(face = "bold", hjust = 0.5),
+    legend.position = "top"
+  )
+```
 
 
