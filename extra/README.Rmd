@@ -36,7 +36,6 @@ ai_tools <- ai_data |>
       "implied" = "Implied",
       "Copilot" = "MS Copilot",
       "Microsoft CoPilot" = "MS Copilot",
-      "CoPilot" = "MS Copilot"
       "CoPilot" = "MS Copilot",
       "Internet searches" = "Internet Search"
     )
@@ -97,6 +96,16 @@ ggplot(llm_summary |> slice_max(freq, n = 10),
     panel.grid.minor = element_blank(),
   )
 
+######
+ai_data %>%
+  ggplot(aes(x = hallucination)) +
+  geom_bar(
+    fill = "#69b3a2",
+    color = "#e9ecef",
+    alpha = 0.9
+  ) +
+  ggtitle("Hallucination Types by AI Tool") +
+  theme_minimal()
 ```
 
 ```{r timeline of increase in cases}

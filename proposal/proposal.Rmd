@@ -126,7 +126,22 @@ word_counts <- ai_tool_tidy |>
 ```
 
 ```{r mutate-variables}
-
+ai_data <- ai_data |>
+  mutate(
+    hallucination = case_when(
+      str_detect(coalesce(hallucination, ""), regex("Miscited|Case Cited|citation|Cittions", ignore_case = TRUE)) ~ "Fake Citation",
+      str_detect(coalesce(hallucination, ""), regex("Chatgpt-Generated|Irrelevant Info|Paragraph|argument|Authority",  ignore_case = TRUE)) ~ "Fake Argument",
+      str_detect(coalesce(hallucination, ""), regex("Inaccuracies|Quotation|Quotations|References|quote|source|evidentiary|evidence", ignore_case = TRUE)) ~ "Fake Source/Quote",
+      str_detect(coalesce(hallucination, ""), regex("Non-Existent Legal|Wrong Legal|Caselaw|case law", ignore_case = TRUE)) ~ "Fabricated Case Law",
+      str_detect(coalesce(hallucination, ""), regex("norm", ignore_case = TRUE)) ~ "Fabricated Norm",
+      str_detect(coalesce(hallucination, ""), regex("Fake/Incorrect|Nonexistent Cases|Non-Existent Israeli|Irrelevant Cases|Fake Legal Case|Fictitious Cases|Non-Existent Case|Or Misrepresented Cases|Non-Existent Cases|Fabricated Cases|Fake Cases|Fake Case|Fake/Flawed Cases|Fictitious Court", ignore_case = TRUE)) ~ "Fabricated Case",
+      str_detect(coalesce(hallucination, ""), regex("Misrepresented Facts|Precedent", ignore_case = TRUE)) ~ "Misrepresented Fact / Precedent",
+      str_detect(coalesce(hallucination, ""), regex("Legal Authorities|Fictitious Authorities|Tribunal|Outdated Advice|Fictitious Legal|Court Decisions|Misattributed Court Decisions|Fictitious Court|Fictitious Judgement|Legal Judgments|Judgements", ignore_case = TRUE)) ~ "False Legal Judgments",
+      str_detect(coalesce(hallucination, ""), regex("Suspicious|Unverifiable|Allegations|Pseudolegal|None", ignore_case = TRUE)) ~ "Unable to Conclude AI-Generated Content",
+      str_detect(coalesce(hallucination, ""), regex("Fabricated Attribution", ignore_case = TRUE)) ~ "Fabricated Attribution",
+      str_detect(coalesce(hallucination, ""), regex("Appeal", ignore_case = TRUE)) ~ "Fake Appeal Brief",
+      TRUE ~ hallucination
+    )
     
   )
 ai_data <- ai_data |>
