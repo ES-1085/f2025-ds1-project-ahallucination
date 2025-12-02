@@ -164,7 +164,80 @@ ggplot(llm_top |> slice_max(freq, n = 10),
 ```
 
 
-```{r monthly-stacked-area, message = FALSE, warning = FALSE}
+```{r monthly-stacked-area, message = FALSE, warning = FALSE, fig.alt = "Stacked area chart showing monthly hallucination cases from 2023 to 2025 for the top three hallucination types. Fake citations are the most frequent overall and skyrocket in 2025."}
+library(tidyverse)
+library(lubridate)
+
+hallucination <- c("Fake Citation", "Fabricated Case", "Fake Source/Quote")
+
+month_df <- ai_data |>
+  mutate(
+    Date = as.Date(date),
+    year = year(Date)
+  ) |>
+  filter(
+    year >= 2023, year <= 2025,
+    hallucination %in% hallucination
+  ) |>
+  mutate(
+    month = floor_date(Date, unit = "month")
+  ) |>
+  count(month, hallucination, name = "n") |>
+  mutate(
+    hallucination = factor(hallucination, levels = c("Fake Citation", "Fabricated Case", "Fake Source/Quote"))
+  )
+
+max_total <- month_df |>
+  group_by(month) |>
+  summarise(total = sum(n), .groups = "drop") |>
+  summarise(max_total = max(total)) |>
+  pull(max_total)
+
+upper_lim <- ceiling((max_total + 5) / 5) * 5 
+
+ggplot(month_df,
+       aes(x = month, y = n, fill = hallucination)) +
+  geom_area(alpha = 0.85, color = "white", linewidth = 0.2) +
+  scale_fill_viridis_d(option = "D", na.translate = FALSE) +
+  scale_x_date(
+    date_breaks = "2 months",
+    date_labels = "%Y-%m",
+    expand = expansion(mult = c(0.02, 0.05))
+  ) +
+  scale_y_continuous(
+    limits = c(0, upper_lim),            
+    breaks = seq(0, upper_lim, 10), 
+    minor_breaks = seq(0, upper_lim, 5),
+    expand = expansion(mult = c(0, 0))
+  ) +
+  labs(
+    title    = "Monthly Hallucination-Related Cases (2023–2025)",
+    subtitle = "Stacked Area Plot",
+    x        = "Monthly Period",
+    y        = "Number of Cases",
+    fill     = "Hallucination Type"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    axis.text.x   = element_text(angle = 45, hjust = 1, vjust = 1),
+    axis.title.x   = element_text(size = 9),
+    axis.title.y   = element_text(size = 9),
+    plot.title    = element_text(size = 12, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    legend.position = c(0.05, 0.9),
+    legend.justification = c("left", "top"),
+    legend.background = element_rect(fill = "white", color = NA),
+    legend.title = element_text(size = 10),
+    legend.text  = element_text(size = 9),
+    legend.key.size = unit(0.6, "lines")
+  )
+```
+
+
+
+
+
+```{r monthly-stacked-hallucinations, message = FALSE, warning = FALSE}
 library(tidyverse)
 library(lubridate)
 
@@ -232,6 +305,7 @@ ggplot(month_df,
     legend.key.size = unit(0.6, "lines")
   )
 ```
+
 
 
 ```{r bimonthly-avg-by-party, message = FALSE, warning = FALSE}
