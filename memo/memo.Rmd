@@ -15,7 +15,130 @@ library(broom)
 
 ### Step 1: _________
 
-```{r}
+```{r data-cleanup}
+ai_data <- ai_data |>
+  mutate(
+    across(
+      c(court, state, hallucination, outcome, monetary_penalty, professional_sanction),
+      ~ .x |> str_squish() |> str_to_title() |> na_if("")
+    )
+  )
+```
+
+```{r monetary-penalty-tidy}
+
+rates <- tibble::tribble(
+  ~currency, ~rate_to_usd,
+  "USD", 1,
+  "EUR", 1.07,
+  "GBP", 1.24,
+  "CAD", 0.73
+)
+
+ai_data <- ai_data %>% 
+  mutate(currency = "USD")
+
+
+monetary_penalty_tidy <- ai_data %>%
+  mutate(
+    monetary_penalty = str_replace_all(monetary_penalty, "[$,]", ""),
+    monetary_penalty = na_if(monetary_penalty, "none"),
+    monetary_penalty = na_if(monetary_penalty, "n/a"),
+    monetary_penalty = na_if(monetary_penalty, "na"),
+    monetary_penalty = na_if(monetary_penalty, "N/A"),
+    monetary_penalty = as.numeric(monetary_penalty)
+  )
+
+monetary_penalty_usd <- monetary_penalty_tidy %>%
+  mutate(
+    monetary_penalty_usd = if_else(str_to_upper(currency) == "USD",
+                                   monetary_penalty,
+                                   NA_real_)
+  )
+```
+
+```{r ai-tool-tidy}
+
+### Standardizing Text
+ai_tool_tidy <- ai_data |>
+  mutate(ai_tool = str_replace_all(ai_tool, " and | & ", ",")) |>
+  separate_rows(ai_tool, sep = ",|/|;") |>
+  mutate(ai_tool = str_squish(ai_tool),
+         ai_tool = na_if(ai_tool, ""),
+         ai_tool = if_else(str_to_lower(ai_tool) %in% c("n/a","na","none"), NA_character_, ai_tool)) |>
+  drop_na(ai_tool)
+
+### Settings Synonyms
+synonyms <- c(
+  "ChatGPT" = "OpenAI ChatGPT",
+  "GPT-4" = "OpenAI ChatGPT",
+  "GPT4" = "OpenAI ChatGPT",
+  "Google Gemini" = "Gemini",
+  "Google Bard" = "Gemini",
+  "Bard" = "Gemini",
+  "Claude" = "Anthropic Claude",
+  "implied" = "Implied",
+  "Copilot" = "MS Copilot",
+  "Microsoft CoPilot" = "MS Copilot",
+  "CoPilot" = "MS Copilot"
+)
+ai_tool_tidy <- ai_tool_tidy |>
+  mutate(ai_tool = coalesce(synonyms[ai_tool], ai_tool))
+
+```
+
+
+```{r hallucination-tidy}
+
+ai_data <- ai_data |>
+  mutate(
+    hallucination = case_when(
+      str_detect(coalesce(hallucination, ""), regex("Miscited|Case Cited|citation|Cittions", ignore_case = TRUE)) ~ "Fake Citation",
+      str_detect(coalesce(hallucination, ""), regex("Chatgpt-Generated|Irrelevant Info|Paragraph|argument|Authority",  ignore_case = TRUE)) ~ "Fake Argument",
+      str_detect(coalesce(hallucination, ""), regex("Inaccuracies|Quotation|Quotations|References|quote|source|evidentiary|evidence", ignore_case = TRUE)) ~ "Fake Source/Quote",
+      str_detect(coalesce(hallucination, ""), regex("Non-Existent Legal|Wrong Legal|Caselaw|case law", ignore_case = TRUE)) ~ "Fabricated Case Law",
+      str_detect(coalesce(hallucination, ""), regex("norm", ignore_case = TRUE)) ~ "Fabricated Norm",
+      str_detect(coalesce(hallucination, ""), regex("Fake/Incorrect|Nonexistent Cases|Non-Existent Israeli|Irrelevant Cases|Fake Legal Case|Fictitious Cases|Non-Existent Case|Or Misrepresented Cases|Non-Existent Cases|Fabricated Cases|Fake Cases|Fake Case|Fake/Flawed Cases|Fictitious Court", ignore_case = TRUE)) ~ "Fabricated Case",
+      str_detect(coalesce(hallucination, ""), regex("Misrepresented Facts|Precedent", ignore_case = TRUE)) ~ "Misrepresented Fact / Precedent",
+      str_detect(coalesce(hallucination, ""), regex("Legal Authorities|Fictitious Authorities|Tribunal|Outdated Advice|Fictitious Legal|Court Decisions|Misattributed Court Decisions|Fictitious Court|Fictitious Judgement|Legal Judgments|Judgements", ignore_case = TRUE)) ~ "False Legal Judgments",
+      str_detect(coalesce(hallucination, ""), regex("Suspicious|Unverifiable|Allegations|Pseudolegal|None", ignore_case = TRUE)) ~ "Unable to Conclude AI-Generated Content",
+      str_detect(coalesce(hallucination, ""), regex("Fabricated Attribution", ignore_case = TRUE)) ~ "Fabricated Attribution",
+      str_detect(coalesce(hallucination, ""), regex("Appeal", ignore_case = TRUE)) ~ "Fake Appeal Brief",
+      TRUE ~ hallucination
+    )
+  )
+
+```
+
+```{r outcome-tidy}
+
+ai_data <- ai_data |>
+  mutate(
+    outcome = case_when(
+      str_detect(outcome, regex("dismissed|thrown out", ignore_case = TRUE)) ~ "Dismissed",
+      str_detect(outcome, regex("pending|ongoing", ignore_case = TRUE)) ~ "Pending",
+      str_detect(outcome, regex("fined|sanction|penalty", ignore_case = TRUE)) ~ "Penalized",
+      TRUE ~ outcome
+    )
+  )
+
+```
+
+```{r professional-sanction-tidy}
+
+ai_data <- ai_data |>
+  mutate(
+    professional_sanction = case_when(
+      str_detect(professional_sanction, regex("yes|y", ignore_case = TRUE)) ~ "Yes",
+      str_detect(professional_sanction, regex("no|n", ignore_case = TRUE)) ~ "No",
+      TRUE ~ professional_sanction
+    )
+  )
+
+```
+
+
+```{r court-tidy}
 
 ```
 
