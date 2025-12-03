@@ -29,8 +29,8 @@ We found our data set on Kaggle, and it was contributed by a man named Damien Ch
 ai_data <- as_tibble(ai_data) |>
   rename(
 `case_name` = `Case Name`,
-`court` = `Court`,
-`state` = `State(s)`,
+`state` = `Court`,
+`country` = `State(s)`,
 `date` = `Date`,
 `party` = `Party(ies)`,
 `ai_tool` = `AI Tool`,
@@ -55,7 +55,7 @@ First, we removed all extra spaces, standardized the capitalization, and convert
 ai_data <- ai_data |>
   mutate(
     across(
-      c(court, state, hallucination, outcome, monetary_penalty, professional_sanction),
+      c(state, country, hallucination, outcome, monetary_penalty, professional_sanction),
       ~ .x |> str_squish() |> str_to_title() |> na_if("")
     )
   )

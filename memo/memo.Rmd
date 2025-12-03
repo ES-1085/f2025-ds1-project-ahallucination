@@ -7,19 +7,44 @@ output: github_document
 This document should contain a detailed account of the data clean up for your data and the design choices you are making for your plots. For instance you will want to document choices you've made that were intentional for your graphic, e.g. color you've chosen for the plot. Think of this document as a code script someone can follow to reproduce the data cleaning steps and graphics in your handout.
 
 ```{r load-packages, message = FALSE}
+
 library(tidyverse)
 library(broom)
+ai_data <- read_csv("../data/Charlotin-hallucination_cases.csv")
+#view(ai_data)
+
 ```
+
 
 ## Data Clean Up Steps for Overall Data
 
 ### Step 1: _________
 
+```{r rename-variables}
+ai_data <- as_tibble(ai_data) |>
+  rename(
+`case_name` = `Case Name`,
+`state` = `Court`,
+`country` = `State(s)`,
+`date` = `Date`,
+`party` = `Party(ies)`,
+`ai_tool` = `AI Tool`,
+`hallucination` = `Hallucination`,
+`outcome` = `Outcome`,
+`monetary_penalty` = `Monetary Penalty`,
+`professional_sanction` = `Professional Sanction`,
+`key_principle` = `Key Principle`,
+`pointer` = `Pointer`,
+`source` = `Source`,
+`details` = `Details`
+)
+```
+
 ```{r data-cleanup}
 ai_data <- ai_data |>
   mutate(
     across(
-      c(court, state, hallucination, outcome, monetary_penalty, professional_sanction),
+      c(state, country, hallucination, outcome, monetary_penalty, professional_sanction),
       ~ .x |> str_squish() |> str_to_title() |> na_if("")
     )
   )
@@ -138,7 +163,64 @@ ai_data <- ai_data |>
 ```
 
 
-```{r court-tidy}
+```{r state-tidy}
+
+ai_data <- ai_data |>
+  mutate(
+    state = case_when(
+      str_detect(state, regex("Iowa", ignore_case = TRUE)) ~ "Iowa",
+      str_detect(state, regex("Alabama", ignore_case = TRUE)) ~ "Alabama",
+      str_detect(state, regex("Arizona", ignore_case = TRUE)) ~ "Arizona",
+      str_detect(state, regex("Arkansas", ignore_case = TRUE)) ~ "Arkansas",
+      str_detect(state, regex("California|Fifth|Cal.|3rd|Cal|2nd|9th", ignore_case = TRUE)) ~ "California",
+      str_detect(state, regex("Colorado", ignore_case = TRUE)) ~ "Colorado",
+      str_detect(state, regex("Connecticut", ignore_case = TRUE)) ~ "Connecticut",
+      str_detect(state, regex("Florida", ignore_case = TRUE)) ~ "Florida",
+      str_detect(state, regex("Georgia|Ga.", ignore_case = TRUE)) ~ "Georgia",
+      str_detect(state, regex("Hawaii|Hawai'i", ignore_case = TRUE)) ~ "Hawaii",
+      str_detect(state, regex("Idaho", ignore_case = TRUE)) ~ "Idaho",
+      str_detect(state, regex("Illinois|Cook County|7th", ignore_case = TRUE)) ~ "Illinois",
+      str_detect(state, regex("Indiana|Ind.", ignore_case = TRUE)) ~ "Indiana",
+      str_detect(state, regex("Kansas", ignore_case = TRUE)) ~ "Kansas",
+      str_detect(state, regex("Kentucky", ignore_case = TRUE)) ~ "Kentucky",
+      str_detect(state, regex("Louisiana", ignore_case = TRUE)) ~ "Louisiana",
+      str_detect(state, regex("Maine", ignore_case = TRUE)) ~ "Maine",
+      str_detect(state, regex("Maryland", ignore_case = TRUE)) ~ "Maryland",
+      str_detect(state, regex("Massachusetts", ignore_case = TRUE)) ~ "Massachusetts",
+      str_detect(state, regex("Michigan|Mich.", ignore_case = TRUE)) ~ "Michigan",
+      str_detect(state, regex("Minnesota|Minnesotta", ignore_case = TRUE)) ~ "Minnesota",
+      str_detect(state, regex("Mississippi|Miss.", ignore_case = TRUE)) ~ "Mississippi",
+      str_detect(state, regex("Missouri", ignore_case = TRUE)) ~ "Missouri",
+      str_detect(state, regex("Montana", ignore_case = TRUE)) ~ "Montana",
+      str_detect(state, regex("Nebraska", ignore_case = TRUE)) ~ "Nebraska",
+      str_detect(state, regex("Nevada|Nev.", ignore_case = TRUE)) ~ "Nevada",
+      str_detect(state, regex("New Hampshire", ignore_case = TRUE)) ~ "New Hampshire",
+      str_detect(state, regex("New Mexico", ignore_case = TRUE)) ~ "New Mexico",
+      str_detect(state, regex("New Jersey", ignore_case = TRUE)) ~ "New Jersey",
+      str_detect(state, regex("New York|E.d.n.y.|N.y.|S.d.n.y.|Kings County|Ndny|Ny|Supreme Court, Ny|Sdny", ignore_case = TRUE)) ~ "New York",
+      str_detect(state, regex("North Carolina|N. Carolina|N.c.", ignore_case = TRUE)) ~ "North Carolina",
+      str_detect(state, regex("North Dakota", ignore_case = TRUE)) ~ "North Dakota",
+      str_detect(state, regex("Ohio", ignore_case = TRUE)) ~ "Ohio",
+      str_detect(state, regex("Oklahoma", ignore_case = TRUE)) ~ "Oklahoma",
+      str_detect(state, regex("Oregon", ignore_case = TRUE)) ~ "Oregon",
+      str_detect(state, regex("Pennsylvania|Penn.|Pa.", ignore_case = TRUE)) ~ "Pennsylvania",
+      str_detect(state, regex("Rhode Island", ignore_case = TRUE)) ~ "Rhode Island",
+      str_detect(state, regex("South Carolina|Sc|S.c.", ignore_case = TRUE)) ~ "South Carolina",
+      str_detect(state, regex("South Dakota", ignore_case = TRUE)) ~ "South Dakota",
+      str_detect(state, regex("Tennessee", ignore_case = TRUE)) ~ "Tennessee",
+      str_detect(state, regex("Texas|Tex.", ignore_case = TRUE)) ~ "Texas",
+      str_detect(state, regex("Utah", ignore_case = TRUE)) ~ "Utah",
+      str_detect(state, regex("Vermont", ignore_case = TRUE)) ~ "Vermont",
+      str_detect(state, regex("Virginia|Gao|Ocaho|Dc|Federal Claims|(Gao)|Tax Court|Fed. Claims|D.c.", ignore_case = TRUE)) ~ "Virginia",
+      str_detect(state, regex("Washington", ignore_case = TRUE)) ~ "Washington",
+      str_detect(state, regex("West Virginia", ignore_case = TRUE)) ~ "West Virginia",
+      str_detect(state, regex("Wisconsin|Ho-Chunk", ignore_case = TRUE)) ~ "Wisconsin",
+      str_detect(state, regex("Wyoming", ignore_case = TRUE)) ~ "Wyoming",
+      str_detect(state, regex("Puerto Rico|Primera", ignore_case = TRUE)) ~ "Puerto Rico",
+      str_detect(state, regex("High Court|Alberta|Frankfurt|Ontario|Family|Nsw|Buenos|Civil|Supreme|Court|Victoria|Review|Rotterdam|Icsid|Rosario|Employment|Immigration|Columbia|Paulo|Chancery|Resolution|Fair Work|Jerusalem|Ontario's|Ottawa|Intellectual|Parana|Queensland|Israel|Uk|Supremo|Housing|Olg|Crt|Florence|Australia|Constitucional|Hague|Manchester|Torino", ignore_case = TRUE)) ~ "International",
+      TRUE ~ state
+    )
+  )
 
 ```
 
