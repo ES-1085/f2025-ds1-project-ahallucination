@@ -348,4 +348,62 @@ ggplot() +
 
 ```
 
+```{r}
+library(tidyverse)
+library(lubridate)
+library(scales)
+
+monthly_tools <- ai_data |>
+  mutate(
+    Date  = ymd(Date),
+    month = floor_date(Date, "month")
+  ) |>
+  filter(!is.na(`AI Tool`)) |>
+  mutate(
+    tool = case_when(
+      str_detect(`AI Tool`, regex("chatgpt", ignore_case = TRUE))        ~ "OpenAI ChatGPT",
+      str_detect(`AI Tool`, regex("copilot", ignore_case = TRUE))        ~ "MS Copilot",
+      str_detect(`AI Tool`, regex("gemini|bard", ignore_case = TRUE))    ~ "Gemini",
+      str_detect(`AI Tool`, regex("claude", ignore_case = TRUE))         ~ "Anthropic Claude",
+      TRUE ~ NA_character_
+    )
+  ) |>
+  filter(!is.na(tool)) |>
+  count(month, tool, name = "n")
+
+tool_order <- monthly_tools |>
+  group_by(tool) |>
+  summarise(total = sum(n), .groups = "drop") |>
+  arrange(desc(total)) |>
+  pull(tool)
+
+monthly_tools <- monthly_tools |>
+  mutate(tool = factor(tool, levels = tool_order))
+
+ggplot(monthly_tools,
+       aes(x = month, y = n, colour = tool, group = tool)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.8) +
+  scale_x_date(
+  breaks = as.Date(c("2024-01-01", "2025-01-01")),
+  labels = c("2024-01-01", "2025-01-01")
+  ) +
+  scale_y_continuous(
+    breaks = seq(0, max_cases, by = 2),       
+    limits = c(0, max_cases),
+    expand = expansion(mult = c(0.02, 0.05))
+  ) +
+  scale_colour_brewer(palette = "Dark2", name = "LLM Type") + 
+  labs(
+    title  = "Trend of AI Hallucination Cases by Most Used LLM Type",
+    x      = "Date",
+    y      = "Number of Cases"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x  = element_text(hjust = 1),
+    plot.title   = element_text(face = "bold", hjust = 0.5)
+  )
+```
+
 
