@@ -355,16 +355,16 @@ library(scales)
 
 monthly_tools <- ai_data |>
   mutate(
-    Date  = ymd(Date),
-    month = floor_date(Date, "month")
+    date  = ymd(date),
+    month = floor_date(date, "month")
   ) |>
-  filter(!is.na(`AI Tool`)) |>
+  filter(!is.na(`ai_tool`)) |>
   mutate(
     tool = case_when(
-      str_detect(`AI Tool`, regex("chatgpt", ignore_case = TRUE))        ~ "OpenAI ChatGPT",
-      str_detect(`AI Tool`, regex("copilot", ignore_case = TRUE))        ~ "MS Copilot",
-      str_detect(`AI Tool`, regex("gemini|bard", ignore_case = TRUE))    ~ "Gemini",
-      str_detect(`AI Tool`, regex("claude", ignore_case = TRUE))         ~ "Anthropic Claude",
+      str_detect(`ai_tool`, regex("chatgpt", ignore_case = TRUE))        ~ "OpenAI ChatGPT",
+      str_detect(`ai_tool`, regex("copilot", ignore_case = TRUE))        ~ "MS Copilot",
+      str_detect(`ai_tool`, regex("gemini|bard", ignore_case = TRUE))    ~ "Gemini",
+      str_detect(`ai_tool`, regex("claude", ignore_case = TRUE))         ~ "Anthropic Claude",
       TRUE ~ NA_character_
     )
   ) |>
@@ -379,6 +379,8 @@ tool_order <- monthly_tools |>
 
 monthly_tools <- monthly_tools |>
   mutate(tool = factor(tool, levels = tool_order))
+
+max_cases <- max(monthly_tools$n, na.rm = TRUE)
 
 ggplot(monthly_tools,
        aes(x = month, y = n, colour = tool, group = tool)) +
