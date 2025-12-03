@@ -270,4 +270,82 @@ ggplot(bi_df, aes(x = bimonth, y = avg_cases, colour = party)) +
   )
 ```
 
+```{r state-pie-map, message = FALSE, warning = FALSE}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(maps)
+library(scatterpie)
+library(stringr)
+library(scales)
+
+state_rep <- ai_data |>
+  filter(!is.na(court_location)) |>
+  mutate(
+    rep_type = case_when(
+      str_detect(party, regex("pro se", ignore_case = TRUE)) ~ "Pro se litigant",
+      TRUE ~ "Lawyer"
+    )
+  ) |>
+  count(court_location, rep_type, name = "n")
+
+state_rep_wide <- state_rep |>
+  tidyr::pivot_wider(
+    names_from  = rep_type,
+    values_from = n,
+    values_fill = 0
+  ) |>
+  rename(
+    pro_se = `Pro se litigant`,
+    lawyer = Lawyer
+  ) |>
+  mutate(total_cases = pro_se + lawyer)
+
+state_centers <- tibble::tibble(
+  court_location = state.name,
+  long = state.center$x,
+  lat  = state.center$y
+) |>
+  add_row(court_location = "Puerto Rico", long = -66.5, lat = 18.2)
+
+state_pies <- state_rep_wide |>
+  inner_join(state_centers, by = "court_location") |>
+  mutate(
+    radius = scales::rescale(sqrt(total_cases), to = c(0.4, 1.2))
+  )
+
+us_map <- map_data("state")
+
+ggplot() +
+  geom_polygon(
+    data  = us_map,
+    aes(x = long, y = lat, group = group),
+    fill  = "#e6ffe6",
+    color = "white"
+  ) +
+  scatterpie::geom_scatterpie(
+    data = state_pies,
+    aes(x = long, y = lat, r = radius),
+    cols  = c("pro_se", "lawyer"),
+    color = NA
+  ) +
+  coord_fixed(1.3) +
+  scale_fill_manual(
+    name   = NULL,
+    values = c(pro_se = "#e41a1c", lawyer = "#377eb8"),
+    labels = c("Pro se litigant", "Lawyer")
+  ) +
+  labs(
+    title    = "AI Hallucination Cases by State",
+    subtitle = "Pie size = total cases; slices = pro se vs lawyer"
+  ) +
+  theme_void() +
+  theme(
+    legend.position = "right",
+    plot.title      = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle   = element_text(hjust = 0.5)
+  )
+
+```
+
 
