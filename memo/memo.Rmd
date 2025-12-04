@@ -161,7 +161,7 @@ ai_tool_tidy <- ai_tool_tidy |>
 
 #### Final Plot 1
 
-```{r plot-one, fig.alt = "Line graph from 2023 to 2025 of number of AI hallucination cases by the 3 most used LLM types which are the color-coded lines. OpenAI/ChatGPT, MS Copilot, and Gemini are the three large language models. Cases spike in the beginning of 2025 with OpenAI/ChatGPT cases increasing the most."}
+```{r plot-one, fig.alt = "Line graph from 2023 to 2025 of number of AI hallucination cases by the 3 most used LLM types represented by three color-coded lines. OpenAI/ChatGPT, MS Copilot, and Gemini are the three large language models plotted. Cases spike in the beginning of 2025 with OpenAI/ChatGPT cases increasing the most."}
 library(tidyverse)
 library(lubridate)
 library(scales)
@@ -309,7 +309,7 @@ ai_data <- ai_data |>
 
 #### Final Plot 2
 
-```{r state-pie-map, message = FALSE, warning = FALSE, fig.alt = "State Pie map of the magnitude of AI hallucination cases and corresponding outcome by state. Relative size of the pie charts correlate to the number of cases in the state and show New York and California as some states with the highest number of cases. SLices are color-coded by outcome and show the majority of New York and California's cases resulted in either a warning or penalty."}
+```{r state-pie-map, message = FALSE, warning = FALSE, fig.alt = "State Pie map of the magnitude of AI hallucination cases and corresponding outcome by state. Relative size of the pie charts correlates to the number of cases in the state. New York and California have the highest number of cases. Slices are color-coded by outcome and show the majority of New York and California's cases resulted in either a warning or penalty."}
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -480,7 +480,7 @@ hall_outcome <- ai_data |>
 
 #### Final Plot 3
 
-```{r plot-three, fig.alt = "Bubble map of the number of cases for each combination of the four outcomes and top five hallucination types. Color of the bubbles correspond to the type of AI hallucination and relative size of the bubbles represent the number of cases under each category."}
+```{r plot-three, fig.alt = "Bubble map of the number of cases for each combination of the four outcomes and top five hallucination types. Color of the bubbles correspond to the type of AI hallucination and relative size of the bubbles represents the number of cases under each intersection of variables"}
 ggplot(hall_outcome,
        aes(x = fct_reorder(outcome, total_cases),
            y = hallucination,
