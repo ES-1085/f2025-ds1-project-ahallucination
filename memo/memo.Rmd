@@ -480,7 +480,7 @@ hall_outcome <- ai_data |>
 
 #### Final Plot 3
 
-```{r plot-three, fig.alt = "Bubble map of the number of cases for each combination of the four outcomes and top five hallucination types. Color of the bubbles correspond to the type of AI hallucination and relative size of the bubbles represents the number of cases under each intersection of variables"}
+```{r plot-three, fig.alt = "Bubble map of the number of cases for each combination of the four outcomes and top five hallucination types. Color of the bubbles correspond to the type of AI hallucination and relative size of the bubbles represents the number of cases under each intersection of variables. The majority of cases contain fake citations. Fake sources/quotes and fabricated cases have a relatively similar amount of cases across each outcome."}
 ggplot(hall_outcome,
        aes(x = fct_reorder(outcome, total_cases),
            y = hallucination,
