@@ -140,12 +140,14 @@ ai_data <- ai_data |>
 ai_data <- ai_data |>
   mutate(
     outcome = case_when(
-      str_detect(outcome, regex("dismissed|thrown out", ignore_case = TRUE)) ~ "Dismissed",
-      str_detect(outcome, regex("pending|ongoing", ignore_case = TRUE)) ~ "Pending",
-      str_detect(outcome, regex("fined|sanction|penalty", ignore_case = TRUE)) ~ "Penalized",
+      str_detect(outcome, regex("Warning|Opportunity|No Contempt|Warned|Caution|Reprimand|Reminder|Refile|Corrections|Exclude|Criticised|Reprimand|Court Imposed", ignore_case = TRUE)) ~ "Warning",
+      str_detect(outcome, regex("dismissed|thrown out|Accepted|Excluded|Rejected|Discharged|Dismiss|Sworn|Withdrew|Removed|Stricken|Striking|Ignored|Struck|Disregarded|Irrelevant|Dismissal|Inadmissible|Admonishment|No Weight|Striking|Adjourned|Withdrawn", ignore_case = TRUE)) ~ "Dismissed",
+      str_detect(outcome, regex("pending|Under Review|Re-Heard|Osc|ongoing|Tenatively|Referral|3 hours|Referred", ignore_case = TRUE)) ~ "Pending",
+      str_detect(outcome, regex("Apologize|Lost On Merits|fined|Lost|sanction|penalty|Fine|costs|Cause|cause|Pay|Costs|Costas|Denied|Community Service|Contempt|Cle Course|Reimburse|Ethics|Fine|Lesser Weight|Treated|Compensated|Liability|Refused|Suspension|Mandantory|Undergo", ignore_case = TRUE)) ~ "Penalized",
       TRUE ~ outcome
     )
   )
+
 
 ```
 
