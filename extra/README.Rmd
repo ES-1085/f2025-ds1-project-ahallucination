@@ -573,3 +573,77 @@ ggplot(monthly_tools,
 
 ```
 
+```{r}
+ggplot(hall_outcome,
+       aes(x = fct_reorder(outcome, -total_cases),
+           y = n_cases,
+           fill = hallucination)) +
+  geom_col(position = "fill", color = "white") +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_fill_viridis_d(option = "C", name = "Hallucination type") +
+  labs(
+    title = "Within-Outcome Distribution of Top 5 Hallucination Types",
+    x     = "Outcome",
+    y     = "Share of cases"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.x = element_text(angle = 30, hjust = 1),
+    panel.grid.major.x = element_blank()
+  )
+
+```
+```{r}
+ggplot(hall_outcome,
+       aes(x = fct_reorder(outcome, -total_cases),
+           y = fct_reorder(hallucination, n_cases),
+           fill = pct_within_outcome)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = percent(pct_within_outcome, accuracy = 1)),
+            color = "white", size = 3) +
+  scale_fill_viridis_c(
+    option = "C",
+    direction = 1,
+    labels = percent_format(accuracy = 1),
+    name = "Share of\ncases in outcome"
+  ) +
+  labs(
+    title   = "Top 5 AI Hallucination Types by Case Outcome",
+    x       = "Outcome",
+    y       = "Hallucination category",
+    caption = "Only the five most common hallucination types are shown."
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.x = element_text(angle = 30, hjust = 1),
+    panel.grid  = element_blank()
+  )
+
+```
+
+
+
+```{r}
+ggplot(hall_outcome,
+       aes(x = fct_reorder(outcome, total_cases),
+           y = hallucination,
+           size = n_cases,
+           fill = hallucination)) +
+  geom_point(shape = 21, color = "black", alpha = 0.85) +
+  scale_size(range = c(3, 18), name = "Number of Cases") +
+  scale_fill_viridis_d(option = "C", guide = "none") +
+  labs(
+    title = "Bubble Map of Top 5 Hallucination Types by Outcome",
+    x = "Outcome",
+    y = "Hallucination Category"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    panel.grid.minor = element_blank(),
+    axis.text.x = element_text(angle = 25, hjust = 1)
+  )
+
+```
+
+
+

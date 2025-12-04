@@ -252,6 +252,50 @@ ggsave("example-starwars.png", width = 4, height = 4)
 ggsave("example-starwars-wide.png", width = 6, height = 4)
 ```
 
+```{r plot-one-cleanup}
+library(tidyverse)
+library(scales)
+library(forcats)
+
+
+ai_data <- ai_data |>
+  mutate(
+    outcome = str_squish(outcome),
+    outcome = na_if(outcome, "NA"),
+    outcome = na_if(outcome, "N/A"),
+    outcome = na_if(outcome, "None"),
+    outcome = na_if(outcome, "")
+  )
+
+top5_hallucinations <- ai_data |>
+  filter(!is.na(hallucination)) |>
+  count(hallucination, sort = TRUE) |>
+  distinct(hallucination, .keep_all = TRUE) |>
+  slice_head(n = 5) |>
+  pull(hallucination) |>
+  unique()
+
+
+hall_outcome <- ai_data |>
+  filter(
+    hallucination %in% top5_hallucinations,
+    !is.na(outcome)
+  ) |>
+  droplevels() |> 
+  count(outcome, hallucination, name = "n_cases") |>
+  group_by(outcome) |>
+  mutate(
+    pct_within_outcome = n_cases / sum(n_cases),
+    total_cases        = sum(n_cases)
+  ) |>
+  ungroup() |>
+  mutate(
+    hallucination = factor(hallucination,
+                           levels = unique(top5_hallucinations)) 
+  )
+
+```
+
 
 
 ### Plot 1: _________
