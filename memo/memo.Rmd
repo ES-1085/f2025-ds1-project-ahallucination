@@ -161,8 +161,66 @@ ai_tool_tidy <- ai_tool_tidy |>
 
 #### Final Plot 1
 
-```{r plot-one}
+```{r plot-one, fig.alt = "Line graph from 2023 to 2025 of number of AI hallucination cases by the 3 most used LLM types which are the color-coded lines. OpenAI/ChatGPT, MS Copilot, and Gemini are the three large language models. Cases spike in the beginning of 2025 with OpenAI/ChatGPT cases increasing the most."}
+library(tidyverse)
+library(lubridate)
+library(scales)
 
+monthly_tools <- ai_data |>
+  mutate(
+    date  = ymd(date),
+    month = floor_date(date, "month")
+  ) |>
+  filter(!is.na(`ai_tool`)) |>
+  mutate(
+    tool = case_when(
+      str_detect(`ai_tool`, regex("chatgpt", ignore_case = TRUE))        ~ "OpenAI ChatGPT",
+      str_detect(`ai_tool`, regex("copilot", ignore_case = TRUE))        ~ "MS Copilot",
+      str_detect(`ai_tool`, regex("gemini|bard", ignore_case = TRUE))    ~ "Gemini",
+      TRUE ~ NA_character_
+    )
+  ) |>
+  filter(!is.na(tool)) |>
+  count(month, tool, name = "n")
+
+tool_order <- monthly_tools |>
+  group_by(tool) |>
+  summarise(total = sum(n), .groups = "drop") |>
+  arrange(desc(total)) |>
+  pull(tool)
+
+monthly_tools <- monthly_tools |>
+  mutate(tool = factor(tool, levels = tool_order))
+
+max_cases <- max(monthly_tools$n, na.rm = TRUE)
+
+ggplot(monthly_tools,
+       aes(x = month, y = n, colour = tool, group = tool)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.8) +
+  scale_x_date(
+  date_breaks = "6 months",
+    date_labels = "%Y-%m",
+    expand = expansion(mult = c(0.02, 0.05))
+  ) +
+  scale_y_continuous(
+    breaks = seq(0, max_cases, by = 2),       
+    limits = c(0, max_cases),
+    expand = expansion(mult = c(0.02, 0.05))
+  ) +
+  scale_colour_brewer(palette = "Dark2", name = "LLM Type") + 
+  labs(
+    title  = "Trend of AI Hallucination Cases by Most Used LLM Type(2023-2025)",
+    x      = "Time Period",
+    y      = "Number of Cases"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x  = element_text(hjust = 1),
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    plot.title   = element_text(size = 14, hjust = 0.5)
+  )
 ```
 
 ### Plot 2: AI Hallucination Cases and Corresponding Outcome by State
@@ -251,7 +309,97 @@ ai_data <- ai_data |>
 
 #### Final Plot 2
 
-```{r plot-two}
+```{r state-pie-map, message = FALSE, warning = FALSE, fig.alt = "State Pie map of the magnitude of AI hallucination cases and corresponding outcome by state. Relative size of the pie charts correlate to the number of cases in the state and show New York and California as some states with the highest number of cases. SLices are color-coded by outcome and show the majority of New York and California's cases resulted in either a warning or penalty."}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(maps)
+library(scatterpie)
+library(stringr)
+library(scales)
+
+ai_data_outcome <- ai_data |>
+  mutate(
+    outcome_simple = case_when(
+      outcome %in% c("Warning", "Dismissed", "Pending", "Penalized") ~ outcome,
+      TRUE ~ NA_character_
+    ),
+    court_location = str_to_title(court_location)
+  ) |>
+  filter(!is.na(outcome_simple)) |>
+  filter(!court_location %in% c("Hawaii", "Puerto Rico"))
+
+
+state_outcome <- ai_data_outcome |>
+  filter(!is.na(court_location)) |>
+  count(court_location, outcome_simple, name = "n")
+
+state_outcome_wide <- state_outcome |>
+  pivot_wider(
+    names_from  = outcome_simple,
+    values_from = n,
+    values_fill = 0
+  ) |>
+  mutate(total_cases = rowSums(across(-court_location)))
+
+state_centers <- tibble::tibble(
+  court_location = state.name,
+  long = state.center$x,
+  lat  = state.center$y
+) |>
+  filter(!court_location %in% c("Hawaii", "Puerto Rico"))
+
+state_pies <- state_outcome_wide |>
+  inner_join(state_centers, by = "court_location") |>
+  mutate(
+    radius = scales::rescale(sqrt(total_cases), to = c(0.4, 1.2))
+  )
+
+pie_cols <- c("Warning", "Dismissed", "Pending", "Penalized")
+
+okabe_ito <- c(
+  "Warning"   = "#F46D43FF", 
+  "Dismissed" = "#4575B4FF", 
+  "Pending"   = "#FDAE61FF", 
+  "Penalized" = "#D73027FF"  
+)
+
+us_map <- map_data("state") |>
+  mutate(region = str_to_title(region)) |>
+  filter(!region %in% c("Hawaii"))
+
+ggplot() +
+  geom_polygon(
+    data = us_map,
+    aes(x = long, y = lat, group = group),
+    fill = "#ABD9E9FF",
+    color = "white"
+  ) +
+  scatterpie::geom_scatterpie(
+    data = state_pies,
+    aes(x = long, y = lat, r = radius),
+    cols = pie_cols,
+    color = NA
+  ) +
+  coord_fixed(1.3) +
+  scale_fill_manual(
+    name = "Outcome",
+    values = okabe_ito
+  ) +
+  labs(
+    title = "AI Hallucination Cases and Corresponding Outcome by State",
+  ) +
+  theme_void() +
+  theme(
+    legend.position = "right",
+    plot.title      = element_text(hjust = 0.5),
+    plot.subtitle   = element_text(hjust = 0.5),
+    legend.background     = element_rect(fill = "white", colour = "black", size = 0.3),
+    legend.box.background = element_rect(fill = "white", colour = "black", size = 0.3),
+    legend.key            = element_rect(fill = "white", colour = "white"),
+    legend.margin         = margin(6, 6, 6, 6),
+    legend.title          = element_text(face = "bold")
+  )
 
 ```
 
@@ -332,8 +480,25 @@ hall_outcome <- ai_data |>
 
 #### Final Plot 3
 
-```{r plot-three}
-
+```{r plot-three, fig.alt = "Bubble map of the number of cases for each combination of the four outcomes and top five hallucination types. Color of the bubbles correspond to the type of AI hallucination and relative size of the bubbles represent the number of cases under each category."}
+ggplot(hall_outcome,
+       aes(x = fct_reorder(outcome, total_cases),
+           y = hallucination,
+           size = n_cases,
+           fill = hallucination)) +
+  geom_point(shape = 21, color = "black", alpha = 0.85) +
+  scale_size(range = c(3, 18), name = "Number of Cases") +
+  scale_fill_viridis_d(option = "C", guide = "none") +
+  labs(
+    title = "Bubble Map of Top 5 Hallucination Types by Outcome",
+    x = "Outcome",
+    y = "Hallucination Category"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    panel.grid.minor = element_blank(),
+    axis.text.x = element_text(angle = 25, hjust = 1)
+  )
 ```
 
 
