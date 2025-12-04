@@ -15,7 +15,6 @@ ai_data <- read_csv("../data/Charlotin-hallucination_cases.csv")
 
 ```
 
-
 ## Data Clean Up Steps for Overall Data
 
 ### Step 1: _________
@@ -40,6 +39,8 @@ ai_data <- as_tibble(ai_data) |>
 )
 ```
 
+### Step 2:
+
 ```{r data-cleanup}
 ai_data <- ai_data |>
   mutate(
@@ -49,6 +50,8 @@ ai_data <- ai_data |>
     )
   )
 ```
+
+#### Step 3:
 
 ```{r monetary-penalty-tidy}
 
@@ -82,7 +85,51 @@ monetary_penalty_usd <- monetary_penalty_tidy %>%
   )
 ```
 
-```{r ai-tool-tidy}
+#### Step 4:
+
+```{r professional-sanction-tidy}
+
+ai_data <- ai_data |>
+  mutate(
+    professional_sanction = case_when(
+      str_detect(professional_sanction, regex("yes|y", ignore_case = TRUE)) ~ "Yes",
+      str_detect(professional_sanction, regex("no|n", ignore_case = TRUE)) ~ "No",
+      TRUE ~ professional_sanction
+    )
+  )
+
+```
+
+## Plots
+
+### ggsave example for saving plots
+
+```{r starwars ggsave example}
+p1 <- starwars |>
+  filter(mass < 1000, 
+         species %in% c("Human", "Cerean", "Pau'an", "Droid", "Gungan")) |>
+  ggplot() +
+  geom_point(aes(x = mass, 
+                 y = height, 
+                 color = species)) +
+  labs(x = "Weight (kg)", 
+       y = "Height (m)",
+       color = "Species",
+       title = "Weight and Height of Select Starwars Species",
+       caption = paste("This data comes from the starwars api: https://swapi.py43.com"))
+
+
+ggsave("example-starwars.png", width = 4, height = 4)
+
+ggsave("example-starwars-wide.png", width = 6, height = 4)
+```
+
+
+### Plot 1: Trend of AI Hallucination Cases by Most Used LLM (2023-2025)
+
+#### Plot 1 Data Cleanup
+
+```{r ai-tool-cleanup}
 
 ### Standardizing Text
 ai_tool_tidy <- ai_data |>
@@ -112,60 +159,19 @@ ai_tool_tidy <- ai_tool_tidy |>
 
 ```
 
+#### Final Plot 1
 
-```{r hallucination-tidy}
-
-ai_data <- ai_data |>
-  mutate(
-    hallucination = case_when(
-      str_detect(coalesce(hallucination, ""), regex("Miscited|Case Cited|citation|Cittions", ignore_case = TRUE)) ~ "Fake Citation",
-      str_detect(coalesce(hallucination, ""), regex("Chatgpt-Generated|Irrelevant Info|Paragraph|argument|Authority",  ignore_case = TRUE)) ~ "Fake Argument",
-      str_detect(coalesce(hallucination, ""), regex("Inaccuracies|Quotation|Quotations|References|quote|source|evidentiary|evidence", ignore_case = TRUE)) ~ "Fake Source/Quote",
-      str_detect(coalesce(hallucination, ""), regex("Non-Existent Legal|Wrong Legal|Caselaw|case law", ignore_case = TRUE)) ~ "Fabricated Case Law",
-      str_detect(coalesce(hallucination, ""), regex("norm", ignore_case = TRUE)) ~ "Fabricated Norm",
-      str_detect(coalesce(hallucination, ""), regex("Fake/Incorrect|Nonexistent Cases|Non-Existent Israeli|Irrelevant Cases|Fake Legal Case|Fictitious Cases|Non-Existent Case|Or Misrepresented Cases|Non-Existent Cases|Fabricated Cases|Fake Cases|Fake Case|Fake/Flawed Cases|Fictitious Court", ignore_case = TRUE)) ~ "Fabricated Case",
-      str_detect(coalesce(hallucination, ""), regex("Misrepresented Facts|Precedent", ignore_case = TRUE)) ~ "Misrepresented Fact / Precedent",
-      str_detect(coalesce(hallucination, ""), regex("Legal Authorities|Fictitious Authorities|Tribunal|Outdated Advice|Fictitious Legal|Court Decisions|Misattributed Court Decisions|Fictitious Court|Fictitious Judgement|Legal Judgments|Judgements", ignore_case = TRUE)) ~ "False Legal Judgments",
-      str_detect(coalesce(hallucination, ""), regex("Suspicious|Unverifiable|Allegations|Pseudolegal|None", ignore_case = TRUE)) ~ "Unable to Conclude AI-Generated Content",
-      str_detect(coalesce(hallucination, ""), regex("Fabricated Attribution", ignore_case = TRUE)) ~ "Fabricated Attribution",
-      str_detect(coalesce(hallucination, ""), regex("Appeal", ignore_case = TRUE)) ~ "Fake Appeal Brief",
-      TRUE ~ hallucination
-    )
-  )
+```{r plot-one}
 
 ```
 
-```{r outcome-tidy}
+### Plot 2: AI Hallucination Cases and Corresponding Outcome by State
 
-ai_data <- ai_data |>
-  mutate(
-    outcome = case_when(
-      str_detect(outcome, regex("Warning|Opportunity|No Contempt|Warned|Caution|Reprimand|Reminder|Refile|Corrections|Exclude|Criticised|Reprimand|Court Imposed", ignore_case = TRUE)) ~ "Warning",
-      str_detect(outcome, regex("dismissed|thrown out|Accepted|Excluded|Rejected|Discharged|Dismiss|Sworn|Withdrew|Removed|Stricken|Striking|Ignored|Struck|Disregarded|Irrelevant|Dismissal|Inadmissible|Admonishment|No Weight|Striking|Adjourned|Withdrawn", ignore_case = TRUE)) ~ "Dismissed",
-      str_detect(outcome, regex("pending|Under Review|Re-Heard|Osc|ongoing|Tenatively|Referral|3 hours|Referred", ignore_case = TRUE)) ~ "Pending",
-      str_detect(outcome, regex("Apologize|Lost On Merits|fined|Lost|sanction|penalty|Fine|costs|Cause|cause|Pay|Costs|Costas|Denied|Community Service|Contempt|Cle Course|Reimburse|Ethics|Fine|Lesser Weight|Treated|Compensated|Liability|Refused|Suspension|Mandantory|Undergo", ignore_case = TRUE)) ~ "Penalized",
-      TRUE ~ outcome
-    )
-  )
+#### Plot 2 Data Cleanup
 
+##### Step 1:
 
-```
-
-```{r professional-sanction-tidy}
-
-ai_data <- ai_data |>
-  mutate(
-    professional_sanction = case_when(
-      str_detect(professional_sanction, regex("yes|y", ignore_case = TRUE)) ~ "Yes",
-      str_detect(professional_sanction, regex("no|n", ignore_case = TRUE)) ~ "No",
-      TRUE ~ professional_sanction
-    )
-  )
-
-```
-
-
-```{r state-tidy}
+```{r court-location-cleanup}
 
 ai_data <- ai_data |>
   mutate(
@@ -226,34 +232,61 @@ ai_data <- ai_data |>
 
 ```
 
-### Step 2: ________
+##### Step 2:
 
-## Plots
+```{r outcome-cleanup}
 
-### ggsave example for saving plots
+ai_data <- ai_data |>
+  mutate(
+    outcome = case_when(
+      str_detect(outcome, regex("Warning|Opportunity|No Contempt|Warned|Caution|Reprimand|Reminder|Refile|Corrections|Exclude|Criticised|Reprimand|Court Imposed", ignore_case = TRUE)) ~ "Warning",
+      str_detect(outcome, regex("dismissed|thrown out|Accepted|Excluded|Rejected|Discharged|Dismiss|Sworn|Withdrew|Removed|Stricken|Striking|Ignored|Struck|Disregarded|Irrelevant|Dismissal|Inadmissible|Admonishment|No Weight|Striking|Adjourned|Withdrawn", ignore_case = TRUE)) ~ "Dismissed",
+      str_detect(outcome, regex("pending|Under Review|Re-Heard|Osc|ongoing|Tenatively|Referral|3 hours|Referred", ignore_case = TRUE)) ~ "Pending",
+      str_detect(outcome, regex("Apologize|Lost On Merits|fined|Lost|sanction|penalty|Fine|costs|Cause|cause|Pay|Costs|Costas|Denied|Community Service|Contempt|Cle Course|Reimburse|Ethics|Fine|Lesser Weight|Treated|Compensated|Liability|Refused|Suspension|Mandantory|Undergo", ignore_case = TRUE)) ~ "Penalized",
+      TRUE ~ outcome
+    )
+  )
 
-```{r starwars ggsave example}
-p1 <- starwars |>
-  filter(mass < 1000, 
-         species %in% c("Human", "Cerean", "Pau'an", "Droid", "Gungan")) |>
-  ggplot() +
-  geom_point(aes(x = mass, 
-                 y = height, 
-                 color = species)) +
-  labs(x = "Weight (kg)", 
-       y = "Height (m)",
-       color = "Species",
-       title = "Weight and Height of Select Starwars Species",
-       caption = paste("This data comes from the starwars api: https://swapi.py43.com"))
-
-
-ggsave("example-starwars.png", width = 4, height = 4)
-
-ggsave("example-starwars-wide.png", width = 6, height = 4)
 ```
 
+#### Final Plot 2
 
-```{r plot-one-cleanup}
+```{r plot-two}
+
+```
+
+### Plot 3: Top 5 Hallucination Types by Outcome
+
+#### Plot 3 Data Cleanup
+
+##### Step 1:
+
+```{r hallucination-cleanup}
+
+ai_data <- ai_data |>
+  mutate(
+    hallucination = case_when(
+      str_detect(coalesce(hallucination, ""), regex("Miscited|Case Cited|citation|Cittions", ignore_case = TRUE)) ~ "Fake Citation",
+      str_detect(coalesce(hallucination, ""), regex("Chatgpt-Generated|Irrelevant Info|Paragraph|argument|Authority",  ignore_case = TRUE)) ~ "Fake Argument",
+      str_detect(coalesce(hallucination, ""), regex("Inaccuracies|Quotation|Quotations|References|quote|source|evidentiary|evidence", ignore_case = TRUE)) ~ "Fake Source/Quote",
+      str_detect(coalesce(hallucination, ""), regex("Non-Existent Legal|Wrong Legal|Caselaw|case law", ignore_case = TRUE)) ~ "Fabricated Case Law",
+      str_detect(coalesce(hallucination, ""), regex("norm", ignore_case = TRUE)) ~ "Fabricated Norm",
+      str_detect(coalesce(hallucination, ""), regex("Fake/Incorrect|Nonexistent Cases|Non-Existent Israeli|Irrelevant Cases|Fake Legal Case|Fictitious Cases|Non-Existent Case|Or Misrepresented Cases|Non-Existent Cases|Fabricated Cases|Fake Cases|Fake Case|Fake/Flawed Cases|Fictitious Court", ignore_case = TRUE)) ~ "Fabricated Case",
+      str_detect(coalesce(hallucination, ""), regex("Misrepresented Facts|Precedent", ignore_case = TRUE)) ~ "Misrepresented Fact / Precedent",
+      str_detect(coalesce(hallucination, ""), regex("Legal Authorities|Fictitious Authorities|Tribunal|Outdated Advice|Fictitious Legal|Court Decisions|Misattributed Court Decisions|Fictitious Court|Fictitious Judgement|Legal Judgments|Judgements", ignore_case = TRUE)) ~ "False Legal Judgments",
+      str_detect(coalesce(hallucination, ""), regex("Suspicious|Unverifiable|Allegations|Pseudolegal|None", ignore_case = TRUE)) ~ "Unable to Conclude AI-Generated Content",
+      str_detect(coalesce(hallucination, ""), regex("Fabricated Attribution", ignore_case = TRUE)) ~ "Fabricated Attribution",
+      str_detect(coalesce(hallucination, ""), regex("Appeal", ignore_case = TRUE)) ~ "Fake Appeal Brief",
+      TRUE ~ hallucination
+    )
+  )
+
+```
+
+##### Step 2:
+
+```{r plot-three-general-cleanup}
+
 library(tidyverse)
 library(scales)
 library(forcats)
@@ -297,31 +330,11 @@ hall_outcome <- ai_data |>
 
 ```
 
+#### Final Plot 3
 
-
-### Plot 1: _________
-
-#### Data cleanup steps specific to plot 1
-
-These data cleaning sections are optional and depend on if you have some data cleaning steps specific to a particular plot
-
-```{r}
+```{r plot-three}
 
 ```
 
 
-#### Final Plot 1
-
-```{r}
-
-```
-
-
-### Plot 2: _________
-
-### Plot 3: ___________
-
-Add more plot sections as needed. Each project should have at least 3 plots, but talk to me if you have fewer than 3.
-
-### Plot 4: ___________ 
 
