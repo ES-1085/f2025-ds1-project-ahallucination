@@ -348,6 +348,100 @@ ggplot() +
 
 ```
 
+```{r state-pie-map, message = FALSE, warning = FALSE}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(maps)
+library(scatterpie)
+library(stringr)
+library(scales)
+
+ai_data_outcome <- ai_data |>
+  mutate(
+    outcome_simple = case_when(
+      outcome %in% c("Warning", "Dismissed", "Pending", "Penalized") ~ outcome,
+      TRUE ~ NA_character_
+    ),
+    court_location = str_to_title(court_location)
+  ) |>
+  filter(!is.na(outcome_simple)) |>
+  filter(!court_location %in% c("Hawaii", "Puerto Rico"))
+
+
+state_outcome <- ai_data_outcome |>
+  filter(!is.na(court_location)) |>
+  count(court_location, outcome_simple, name = "n")
+
+state_outcome_wide <- state_outcome |>
+  pivot_wider(
+    names_from  = outcome_simple,
+    values_from = n,
+    values_fill = 0
+  ) |>
+  mutate(total_cases = rowSums(across(-court_location)))
+
+state_centers <- tibble::tibble(
+  court_location = state.name,
+  long = state.center$x,
+  lat  = state.center$y
+) |>
+  filter(!court_location %in% c("Hawaii", "Puerto Rico"))
+
+state_pies <- state_outcome_wide |>
+  inner_join(state_centers, by = "court_location") |>
+  mutate(
+    radius = scales::rescale(sqrt(total_cases), to = c(0.4, 1.2))
+  )
+
+pie_cols <- c("Warning", "Dismissed", "Pending", "Penalized")
+
+okabe_ito <- c(
+  "Warning"   = "#F46D43FF", 
+  "Dismissed" = "#4575B4FF", 
+  "Pending"   = "#FDAE61FF", 
+  "Penalized" = "#D73027FF"  
+)
+
+us_map <- map_data("state") |>
+  mutate(region = str_to_title(region)) |>
+  filter(!region %in% c("Hawaii"))
+
+ggplot() +
+  geom_polygon(
+    data = us_map,
+    aes(x = long, y = lat, group = group),
+    fill = "#ABD9E9FF",
+    color = "white"
+  ) +
+  scatterpie::geom_scatterpie(
+    data = state_pies,
+    aes(x = long, y = lat, r = radius),
+    cols = pie_cols,
+    color = NA
+  ) +
+  coord_fixed(1.3) +
+  scale_fill_manual(
+    name = "Outcome",
+    values = okabe_ito
+  ) +
+  labs(
+    title = "AI Hallucination Cases and Corresponding Outcome by State",
+  ) +
+  theme_void() +
+  theme(
+    legend.position = "right",
+    plot.title      = element_text(hjust = 0.5),
+    plot.subtitle   = element_text(hjust = 0.5),
+    legend.background     = element_rect(fill = "white", colour = "black", size = 0.3),
+    legend.box.background = element_rect(fill = "white", colour = "black", size = 0.3),
+    legend.key            = element_rect(fill = "white", colour = "white"),
+    legend.margin         = margin(6, 6, 6, 6),
+    legend.title          = element_text(face = "bold")
+  )
+```
+
+
 ```{r}
 library(tidyverse)
 library(lubridate)
@@ -573,26 +667,65 @@ ggplot(monthly_tools,
 
 ```
 
+```{r}
+ggplot(hall_outcome,
+       aes(x = fct_reorder(outcome, -total_cases),
+           y = n_cases,
+           fill = hallucination)) +
+  geom_col(position = "fill", color = "white") +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_fill_viridis_d(option = "C", name = "Hallucination type") +
+  labs(
+    title = "Within-Outcome Distribution of Top 5 Hallucination Types",
+    x     = "Outcome",
+    y     = "Share of cases"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.x = element_text(angle = 30, hjust = 1),
+    panel.grid.major.x = element_blank()
+  )
+
+```
+```{r}
+ggplot(hall_outcome,
+       aes(x = fct_reorder(outcome, -total_cases),
+           y = fct_reorder(hallucination, n_cases),
+           fill = pct_within_outcome)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = percent(pct_within_outcome, accuracy = 1)),
+            color = "white", size = 3) +
+  scale_fill_viridis_c(
+    option = "C",
+    direction = 1,
+    labels = percent_format(accuracy = 1),
+    name = "Share of\ncases in outcome"
+  ) +
+  labs(
+    title   = "Top 5 AI Hallucination Types by Case Outcome",
+    x       = "Outcome",
+    y       = "Hallucination category",
+    caption = "Only the five most common hallucination types are shown."
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.x = element_text(angle = 30, hjust = 1),
+    panel.grid  = element_blank()
+  )
+
+```
 
 
 
 ```{r}
 ggplot(hall_outcome,
        aes(x = fct_reorder(outcome, total_cases),
-           y = hallucination)) +
-  
-  # Outer bubble (larger, lighter)
-  geom_point(aes(size = n_cases),
-             shape = 21, fill = "white", color = "black",
-             alpha = 0.5, stroke = 1.2) +
-  
-  # Inner bubble (actual value)
-  geom_point(aes(size = n_cases, fill = hallucination),
-             shape = 21, color = "black", alpha = 0.9, stroke = 0.3) +
-  
-  scale_size(range = c(3, 12), name = "Number of Cases") +   # <-- smaller range
+           y = hallucination,
+           size = n_cases,
+           fill = hallucination)) +
+  geom_point(shape = 21, color = "black", alpha = 0.85) +
+  scale_size(range = c(3, 18), name = "Number of Cases") +
   scale_fill_viridis_d(option = "C", guide = "none") +
-  
   labs(
     title = "Bubble Map of Top 5 Hallucination Types by Outcome",
     x = "Outcome",
@@ -605,9 +738,6 @@ ggplot(hall_outcome,
   )
 
 ```
-
-
-
 
 
 
