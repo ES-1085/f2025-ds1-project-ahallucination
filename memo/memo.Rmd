@@ -75,25 +75,37 @@ rates <- tibble::tribble(
   ~currency, ~rate_to_usd,
   "USD", 1,
   "EUR", 1.07,
-  "GBP", 1.24,
-  "CAD", 0.73
+  "Gbp", 1.24,
+  "Cad", 0.73,
+  "Ils", 0.31,
+  "Aud", 0.66
 )
 
 
-monetary_penalty_tidy <- ai_data %>%
+monetary_penalty_clean <- ai_data |>
   mutate(
-    monetary_penalty = str_replace_all(monetary_penalty, "[$,]", ""),
-    monetary_penalty = na_if(monetary_penalty, "none"),
-    monetary_penalty = na_if(monetary_penalty, "n/a"),
-    monetary_penalty = na_if(monetary_penalty, "na"),
-    monetary_penalty = na_if(monetary_penalty, "N/A"),
-    monetary_penalty = as.numeric(monetary_penalty),
-    currency = str_to_upper(currency)  # normalize currency codes
-  ) %>%
-  left_join(rates, by = "currency") %>%     # JOIN EXCHANGE RATES
+    monetary_penalty_clean = monetary_penalty |>
+      str_replace_all("[$,]", "") |>
+      str_squish(),
+    monetary_penalty_clean = na_if(str_to_lower(monetary_penalty_clean), "none"),
+    monetary_penalty_clean = na_if(monetary_penalty_clean, "n/a"),
+    monetary_penalty_clean = na_if(monetary_penalty_clean, "na"),
+    monetary_penalty_clean = na_if(monetary_penalty_clean, "N/A"),
+    currency = str_extract(
+      str_to_lower(monetary_penalty_clean),
+      "(usd|cad|ils|eur|gbp|aud)"
+    ),
+    currency = str_to_upper(currency),
+    monetary_amount = readr::parse_number(monetary_penalty_clean),
+    currency = if_else(is.na(currency) & !is.na(monetary_amount),
+                       "USD", currency)
+  ) |>
+  left_join(rates, by = "currency") |>
   mutate(
-    monetary_penalty_usd = monetary_penalty * rate_to_usd
+    monetary_penalty_usd = monetary_amount * rate_to_usd,
+    currency = if_else(!is.na(monetary_amount), "USD", NA_character_)
   )
+
 ```
 
 ##### Step 4:
@@ -123,7 +135,6 @@ ________________________________________________________________________________
 
 ```{r ai-tool-cleanup}
 
-### Standardizing Text
 ai_tool_tidy <- ai_data |>
   mutate(ai_tool = str_replace_all(ai_tool, " and | & ", ",")) |>
   separate_rows(ai_tool, sep = ",|/|;") |>
@@ -132,7 +143,6 @@ ai_tool_tidy <- ai_data |>
          ai_tool = if_else(str_to_lower(ai_tool) %in% c("n/a","na","none"), NA_character_, ai_tool)) |>
   drop_na(ai_tool)
 
-### Settings Synonyms
 synonyms <- c(
   "ChatGPT" = "OpenAI ChatGPT",
   "GPT-4" = "OpenAI ChatGPT",
@@ -153,9 +163,8 @@ ai_tool_tidy <- ai_tool_tidy |>
 
 ##### Step 2:
 
-We aimed to analyze monthly trends in hallucination cases by comparing occurrences across different LLM tools. To ensure consistency, we formatted all dates as year-month-day and grouped cases by month. We filtered for rows with entries in the ‘ai_tool’ column. Using case_when(), we standardized tool names (ChatGPT, MS CoPilot, Gemini) regardless of synonyms or capitalization. We focused analysis on the top three LLMs based on reported cases. For clarity in the legend, we listed LLMs in descending order of total cases by grouping and counting entries. We adjusted the y-axis to fit the maximum number of cases found, using the max_cases variable for customization. To avoid overcrowding the x-axis, we displayed axis breaks every 6 months instead of every month. Finally, we chose the “Dark2” palette from RColorBrewer for accessibility.
+```{r plot-one-general-cleanup}
 
-```{r}
 monthly_tools <- ai_data |>
   mutate(
     date  = ymd(date),
@@ -186,8 +195,9 @@ max_cases <- max(monthly_tools$n, na.rm = TRUE)
 
 ```
 
-
 ### Final Plot 1
+
+We aimed to analyze monthly trends in hallucination cases by comparing occurrences across different LLM tools. To ensure consistency, we formatted all dates as year-month-day and grouped cases by month. We filtered for rows with entries in the ‘ai_tool’ column. Using case_when(), we standardized tool names (ChatGPT, MS CoPilot, Gemini) regardless of synonyms or capitalization. We focused analysis on the top three LLMs based on reported cases. For clarity in the legend, we listed LLMs in descending order of total cases by grouping and counting entries. We adjusted the y-axis to fit the maximum number of cases found, using the max_cases variable for customization. To avoid overcrowding the x-axis, we displayed axis breaks every 6 months instead of every month. Finally, we chose the “Dark2” palette from RColorBrewer for accessibility.
 
 ```{r plot-one, message = FALSE, warning = FALSE, fig.alt = "Line graph from 2023 to 2025 of number of AI hallucination cases by the 3 most used LLM types represented by three color-coded lines. OpenAI/ChatGPT, MS Copilot, and Gemini are the three large language models plotted. Cases spike in the beginning of 2025 with OpenAI/ChatGPT cases inreasing the most."}
 
