@@ -66,7 +66,8 @@ Charlotin, D. (2025). AI Hallucination Cases Data 2025 [Data set]. Kaggle. https
 
 Reference 1: https://www.kaggle.com/datasets/umerhaddii/ai-hallucination-cases-data-2025
 
-Reference 2: 
+Reference 2: https://www.nber.org/system/files/working_papers/w34255/w34255.pdf
+
 
 
 
