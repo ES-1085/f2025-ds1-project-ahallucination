@@ -53,8 +53,8 @@ further are:
 ai_data <- as_tibble(ai_data) |>
   rename(
 `case_name` = `Case Name`,
-`court` = `Court`,
-`state` = `State(s)`,
+`state` = `Court`,
+`country` = `State(s)`,
 `date` = `Date`,
 `party` = `Party(ies)`,
 `ai_tool` = `AI Tool`,
@@ -93,22 +93,47 @@ standard word or phrase.
 ai_data <- ai_data |>
   mutate(
     across(
-      c(court, state, hallucination, outcome, monetary_penalty, professional_sanction), ~ .x |>
-        str_squish() |>
-        str_to_title() |>
-        na_if("")
-    ),
-monetary_penalty = monetary_penalty |>
-      str_replace_all("[\\$,]", "") |>
-      str_replace_all("(?i)none|n/a|na", NA_character_) |>
-      as.numeric()
+      c(state, country, hallucination, outcome, monetary_penalty, professional_sanction),
+      ~ .x |> str_squish() |> str_to_title() |> na_if("")
+    )
+  )
+
+rates <- tibble::tribble(
+  ~currency, ~rate_to_usd,
+  "USD", 1,
+  "EUR", 1.07,
+  "GBP", 1.24,
+  "CAD", 0.73
 )
+
+ai_data <- ai_data %>% 
+  mutate(currency = "USD")
+
+
+monetary_penalty_tidy <- ai_data %>%
+  mutate(
+    monetary_penalty = str_replace_all(monetary_penalty, "[$,]", ""),
+    monetary_penalty = na_if(monetary_penalty, "none"),
+    monetary_penalty = na_if(monetary_penalty, "n/a"),
+    monetary_penalty = na_if(monetary_penalty, "na"),
+    monetary_penalty = na_if(monetary_penalty, "N/A"),
+    monetary_penalty = as.numeric(monetary_penalty)
+  )
 ```
 
     ## Warning: There was 1 warning in `mutate()`.
-    ## ℹ In argument: `monetary_penalty = as.numeric(...)`.
+    ## ℹ In argument: `monetary_penalty = as.numeric(monetary_penalty)`.
     ## Caused by warning:
     ## ! NAs introduced by coercion
+
+``` r
+monetary_penalty_usd <- monetary_penalty_tidy %>%
+  mutate(
+    monetary_penalty_usd = if_else(str_to_upper(currency) == "USD",
+                                   monetary_penalty,
+                                   NA_real_)
+  )
+```
 
 ``` r
 ai_tool_tidy <- ai_data |>
@@ -125,9 +150,14 @@ synonyms <- c(
   "ChatGPT" = "OpenAI ChatGPT",
   "GPT-4" = "OpenAI ChatGPT",
   "GPT4" = "OpenAI ChatGPT",
-  "Bard" = "Google Bard / Gemini",
-  "Gemini" = "Google Bard / Gemini",
-  "Claude" = "Anthropic Claude"
+  "Google Gemini" = "Gemini",
+  "Google Bard" = "Gemini",
+  "Bard" = "Gemini",
+  "Claude" = "Anthropic Claude",
+  "implied" = "Implied",
+  "Copilot" = "MS Copilot",
+  "Microsoft CoPilot" = "MS Copilot",
+  "CoPilot" = "MS Copilot"
 )
 ai_tool_tidy <- ai_tool_tidy |>
   mutate(ai_tool = coalesce(synonyms[ai_tool], ai_tool))
@@ -142,20 +172,20 @@ word_counts <- ai_tool_tidy |>
 ai_data <- ai_data |>
   mutate(
     hallucination = case_when(
-      str_detect(coalesce(hallucination, ""), regex("citation", ignore_case = TRUE)) ~ "Fake Citation",
-      str_detect(coalesce(hallucination, ""), regex("argument",  ignore_case = TRUE)) ~ "Fake Argument",
-      str_detect(coalesce(hallucination, ""), regex("quote|source", ignore_case = TRUE)) ~ "Fake Source/Quote",
+      str_detect(coalesce(hallucination, ""), regex("Miscited|Case Cited|citation|Cittions", ignore_case = TRUE)) ~ "Fake Citation",
+      str_detect(coalesce(hallucination, ""), regex("Chatgpt-Generated|Irrelevant Info|Paragraph|argument|Authority",  ignore_case = TRUE)) ~ "Fake Argument",
+      str_detect(coalesce(hallucination, ""), regex("Inaccuracies|Quotation|Quotations|References|quote|source|evidentiary|evidence", ignore_case = TRUE)) ~ "Fake Source/Quote",
+      str_detect(coalesce(hallucination, ""), regex("Non-Existent Legal|Wrong Legal|Caselaw|case law", ignore_case = TRUE)) ~ "Fabricated Case Law",
+      str_detect(coalesce(hallucination, ""), regex("norm", ignore_case = TRUE)) ~ "Fabricated Norm",
+      str_detect(coalesce(hallucination, ""), regex("Fake/Incorrect|Nonexistent Cases|Non-Existent Israeli|Irrelevant Cases|Fake Legal Case|Fictitious Cases|Non-Existent Case|Or Misrepresented Cases|Non-Existent Cases|Fabricated Cases|Fake Cases|Fake Case|Fake/Flawed Cases|Fictitious Court", ignore_case = TRUE)) ~ "Fabricated Case",
+      str_detect(coalesce(hallucination, ""), regex("Misrepresented Facts|Precedent", ignore_case = TRUE)) ~ "Misrepresented Fact / Precedent",
+      str_detect(coalesce(hallucination, ""), regex("Legal Authorities|Fictitious Authorities|Tribunal|Outdated Advice|Fictitious Legal|Court Decisions|Misattributed Court Decisions|Fictitious Court|Fictitious Judgement|Legal Judgments|Judgements", ignore_case = TRUE)) ~ "False Legal Judgments",
+      str_detect(coalesce(hallucination, ""), regex("Suspicious|Unverifiable|Allegations|Pseudolegal|None", ignore_case = TRUE)) ~ "Unable to Conclude AI-Generated Content",
+      str_detect(coalesce(hallucination, ""), regex("Fabricated Attribution", ignore_case = TRUE)) ~ "Fabricated Attribution",
+      str_detect(coalesce(hallucination, ""), regex("Appeal", ignore_case = TRUE)) ~ "Fake Appeal Brief",
       TRUE ~ hallucination
     )
-  )
-ai_data <- ai_data |>
-  mutate(
-    hallucination = case_when(
-      str_detect(hallucination, regex("citation", ignore_case = TRUE)) ~ "Fake Citation",
-      str_detect(hallucination, regex("argument", ignore_case = TRUE)) ~ "Fake Argument",
-      str_detect(hallucination, regex("quote|source", ignore_case = TRUE)) ~ "Fake Source/Quote",
-      TRUE ~ hallucination
-    )
+    
   )
 ai_data <- ai_data |>
   mutate(
@@ -180,44 +210,46 @@ ai_data <- ai_data |>
 print(dim(ai_data))
 ```
 
-    ## [1] 426  14
+    ## [1] 426  15
 
 ``` r
 print(glimpse(ai_data))
 ```
 
     ## Rows: 426
-    ## Columns: 14
+    ## Columns: 15
     ## $ case_name             <chr> "The People v. Raziel Ruiz Alvarez", "In the Int…
-    ## $ court                 <chr> "Ca California", "Ca Iowa", "Ca California", "D.…
-    ## $ state                 <chr> "Usa", "Usa", "Usa", "Usa", "Usa", "Usa", "Singa…
+    ## $ state                 <chr> "Ca California", "Ca Iowa", "Ca California", "D.…
+    ## $ country               <chr> "Usa", "Usa", "Usa", "Usa", "Usa", "Usa", "Singa…
     ## $ date                  <date> 2025-10-02, 2025-10-01, 2025-09-30, 2025-09-30,…
     ## $ party                 <chr> "Lawyer", "Lawyer", "Pro Se Litigant", "Expert",…
     ## $ ai_tool               <chr> "Unidentified", "Unidentified", "Implied", "Chat…
     ## $ hallucination         <chr> "Fake Citation", "Fake Citation", "Fake Citation…
     ## $ outcome               <chr> "Penalized", "Penalized", "Warning", "Dismissed"…
-    ## $ monetary_penalty      <dbl> NA, NA, NA, NA, NA, NA, 800, NA, NA, NA, NA, NA,…
+    ## $ monetary_penalty      <chr> "1500 Usd", "150 Usd", NA, NA, NA, NA, "800", NA…
     ## $ professional_sanction <chr> "Yes", "Yes", "No", "No", "No", "No", "No", "No"…
     ## $ key_principle         <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, …
     ## $ pointer               <chr> "Volokh", NA, NA, NA, NA, NA, NA, NA, NA, NA, "V…
     ## $ source                <chr> "https://reason.com/volokh/2025/10/04/court-espe…
     ## $ details               <chr> "\"When criminal defense attorneys fail to compl…
-    ## # A tibble: 426 × 14
-    ##    case_name          court state date       party ai_tool hallucination outcome
-    ##    <chr>              <chr> <chr> <date>     <chr> <chr>   <chr>         <chr>  
-    ##  1 The People v. Raz… Ca C… Usa   2025-10-02 Lawy… Uniden… Fake Citation Penali…
-    ##  2 In the Interest o… Ca I… Usa   2025-10-01 Lawy… Uniden… Fake Citation Penali…
-    ##  3 In re the Marriag… Ca C… Usa   2025-09-30 Pro … Implied Fake Citation Warning
-    ##  4 Khoury et al v. I… D. U… Usa   2025-09-30 Expe… ChatGPT Fake Evidence Dismis…
-    ##  5 Tomlin v. State o… D. N… Usa   2025-09-30 Pro … Implied Fake Citation Warning
-    ##  6 Munoz v. Lopez     Ca C… Usa   2025-09-29 Pro … Implied Fake Citation Warning
-    ##  7 Tajudin bin Gulam… High… Sing… 2025-09-29 Lawy… Uniden… Fake Citation Costs …
-    ##  8 Chapter Kris Jack… N.d.… Usa   2025-09-29 Pro … Implied Fake Citation Show C…
-    ##  9 Jade Riley Burch … D. N… Usa   2025-09-26 Pro … Uniden… Fake Citation Warning
-    ## 10 Reddy v Saroya     Ca A… Cana… 2025-09-26 Lawy… Implied Fake Citation <NA>   
+    ## $ currency              <chr> "USD", "USD", "USD", "USD", "USD", "USD", "USD",…
+    ## # A tibble: 426 × 15
+    ##    case_name        state country date       party ai_tool hallucination outcome
+    ##    <chr>            <chr> <chr>   <date>     <chr> <chr>   <chr>         <chr>  
+    ##  1 The People v. R… Ca C… Usa     2025-10-02 Lawy… Uniden… Fake Citation Penali…
+    ##  2 In the Interest… Ca I… Usa     2025-10-01 Lawy… Uniden… Fake Citation Penali…
+    ##  3 In re the Marri… Ca C… Usa     2025-09-30 Pro … Implied Fake Citation Warning
+    ##  4 Khoury et al v.… D. U… Usa     2025-09-30 Expe… ChatGPT Fake Source/… Dismis…
+    ##  5 Tomlin v. State… D. N… Usa     2025-09-30 Pro … Implied Fake Citation Warning
+    ##  6 Munoz v. Lopez   Ca C… Usa     2025-09-29 Pro … Implied Fake Citation Warning
+    ##  7 Tajudin bin Gul… High… Singap… 2025-09-29 Lawy… Uniden… Fake Citation Costs …
+    ##  8 Chapter Kris Ja… N.d.… Usa     2025-09-29 Pro … Implied Fake Citation Show C…
+    ##  9 Jade Riley Burc… D. N… Usa     2025-09-26 Pro … Uniden… Fake Citation Warning
+    ## 10 Reddy v Saroya   Ca A… Canada  2025-09-26 Lawy… Implied Fake Citation <NA>   
     ## # ℹ 416 more rows
-    ## # ℹ 6 more variables: monetary_penalty <dbl>, professional_sanction <chr>,
-    ## #   key_principle <chr>, pointer <chr>, source <chr>, details <chr>
+    ## # ℹ 7 more variables: monetary_penalty <chr>, professional_sanction <chr>,
+    ## #   key_principle <chr>, pointer <chr>, source <chr>, details <chr>,
+    ## #   currency <chr>
 
 ``` r
 print(spec(ai_data))
@@ -269,20 +301,28 @@ as we explore our research questions further.
 summary(ai_data$monetary_penalty)
 ```
 
-    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
-    ##     1.0     1.0     1.0   255.3   400.5  1000.0     415
+    ##    Length     Class      Mode 
+    ##       426 character character
 
 **Preliminary Visualization**
 
 ``` r
-library(dplyr)
+ai_data$monetary_penalty <- as.numeric(ai_data$monetary_penalty)
+```
+
+    ## Warning: NAs introduced by coercion
+
+``` r
 word_counts <- ai_data |>
   count(ai_tool, sort = TRUE)
 
 ggplot(ai_data, aes(x = monetary_penalty)) +
   geom_histogram(bins = 30, fill = "red", color = "white") +
-  labs(title = "Distribution of Monetary Penalties",
-       x = "Penalty Amount (USD)", y = "Number of Cases") +
+  labs(
+    title = "Distribution of Monetary Penalties",
+    x = "Penalty Amount (USD)",
+    y = "Number of Cases"
+  ) +
   theme_minimal()
 ```
 
@@ -304,3 +344,66 @@ ai_data |>
 ```
 
 ![](proposal_files/figure-gfm/visualizations-2.png)<!-- -->
+
+``` r
+ggplot(ai_data, aes(x = state, fill = monetary_penalty)) +
+  geom_bar(color = "white") +
+  labs(
+    title = "Amount of Cases per State",
+    x = "State",
+    y = "Number of Cases", 
+    fill = "Penalty Amount (USD)"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+    ## Warning: The following aesthetics were dropped during statistical transformation: fill.
+    ## ℹ This can happen when ggplot fails to infer the correct grouping structure in
+    ##   the data.
+    ## ℹ Did you forget to specify a `group` aesthetic or to convert a numerical
+    ##   variable into a factor?
+
+![](proposal_files/figure-gfm/visualizations-3.png)<!-- -->
+
+``` r
+ggplot(ai_data, aes(x = party, fill = monetary_penalty)) +
+  geom_bar(color = "white") +
+  labs(
+    title = "monetary penalty per party",
+    x = "Party",
+    y = "Monetary Penalty (USD)", 
+    fill = "Penalty Amount (USD)"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+    ## Warning: The following aesthetics were dropped during statistical transformation: fill.
+    ## ℹ This can happen when ggplot fails to infer the correct grouping structure in
+    ##   the data.
+    ## ℹ Did you forget to specify a `group` aesthetic or to convert a numerical
+    ##   variable into a factor?
+
+![](proposal_files/figure-gfm/visualizations-4.png)<!-- -->
+
+``` r
+ggplot(ai_data, aes(x = party, y = monetary_penalty, fill = party)) +
+  geom_boxplot(color = "black") +
+  labs(
+    title = "Distribution of Monetary Penalties per Party",
+    x = "Party",
+    y = "Monetary Penalty (USD)",
+    fill = "Party"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  )
+```
+
+    ## Warning: Removed 415 rows containing non-finite outside the scale range
+    ## (`stat_boxplot()`).
+
+![](proposal_files/figure-gfm/visualizations-5.png)<!-- -->
