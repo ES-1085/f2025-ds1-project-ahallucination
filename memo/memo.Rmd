@@ -215,34 +215,38 @@ We aimed to analyze monthly trends in hallucination cases by comparing occurrenc
 
 ```{r line-graph-trend-by-LLM, message = FALSE, warning = FALSE, fig.alt = "Line graph from 2023 to 2025 of number of AI hallucination cases by the 3 most used LLM types represented by three color-coded lines. OpenAI/ChatGPT, MS Copilot, and Gemini are the three large language models plotted. Cases spike in the beginning of 2025 with OpenAI/ChatGPT cases inreasing the most."}
 
-
 ggplot(monthly_tools,
        aes(x = month, y = n, colour = tool, group = tool)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.8) +
   scale_x_date(
-  date_breaks = "6 months",
+    date_breaks = "6 months",
     date_labels = "%Y-%m",
     expand = expansion(mult = c(0.02, 0.05))
   ) +
   scale_y_continuous(
-    breaks = seq(0, max_cases, by = 2),       
+    breaks = seq(0, max_cases, by = 2),
     limits = c(0, max_cases),
     expand = expansion(mult = c(0.02, 0.05))
   ) +
-  scale_colour_brewer(palette = "Dark2", name = "LLM Type") + 
+  scale_colour_brewer(palette = "Dark2", name = "LLM Type") +
   labs(
-    title = "Trend of AI Hallucination Cases by Most Used LLM Type(2023-2025)",
+    title = "Trend of AI Hallucination Cases by Most Used LLM Type (2023–2025)",
     x = "Time Period",
     y = "Number of Cases"
   ) +
   theme_minimal() +
   theme(
-    axis.text.x  = element_text(hjust = 1),
+    plot.title.position = "plot",
+    plot.title = element_text(size = 10, hjust = 0),
+    plot.margin = margin(t = 20, r = 10, b = 10, l = 10),
+    axis.text.x = element_text(hjust = 1),
     axis.title.x = element_text(size = 12),
-    axis.title.y = element_text(size = 12),
-    plot.title   = element_text(size = 14, hjust = 0.5)
+    axis.title.y = element_text(size = 12)
   )
+
+ggsave("trendbyLLM.png", width = 6, height = 4, units = "in")
+
 ```
 
 ### Plot 2: AI Hallucination Cases and Corresponding Outcome by State
@@ -415,19 +419,22 @@ ggplot() +
     values = okabe_ito
   ) +
   labs(
-    title = "AI Hallucination Cases and Corresponding Outcome by State",
+    title = "AI Hallucination Cases and Corresponding Outcome by State"
   ) +
   theme_void() +
   theme(
     legend.position = "right",
-    plot.title      = element_text(hjust = 0.5),
-    plot.subtitle   = element_text(hjust = 0.5),
+    plot.title      = element_text(hjust = 0.5, size = 12),
+    plot.margin = margin(t = 5, r = 10, b = 5, l = 40),
     legend.background     = element_rect(fill = "white", colour = "black", size = 0.3),
     legend.box.background = element_rect(fill = "white", colour = "black", size = 0.3),
     legend.key            = element_rect(fill = "white", colour = "white"),
     legend.margin         = margin(6, 6, 6, 6),
     legend.title          = element_text(face = "bold")
   )
+
+ggsave("CasesbyOutcome.png", width = 6, height = 4, units = "in")
+
 
 ```
 
@@ -527,8 +534,13 @@ ggplot(hall_outcome,
   theme_minimal(base_size = 13) +
   theme(
     panel.grid.minor = element_blank(),
-    axis.text.x = element_text(angle = 25, hjust = 1)
+    axis.text.x = element_text(angle = 25, hjust = 1),
+    plot.title = element_text(hjust = 0, size = 14),
+    plot.margin = margin(t = 5, r = 10, b = 5, l = 20)
   )
+
+ggsave("HallucinationybyOutcome.png", width = 6, height = 4, units = "in")
+
 ```
 
 

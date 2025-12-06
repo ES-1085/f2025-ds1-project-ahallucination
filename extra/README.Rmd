@@ -1,4 +1,6 @@
 
+###Extra Plots & Code
+
 ```{r most hallucination cases by state table}
 state_summary |> arrange(desc(num_cases)) |> head(15)
 
@@ -124,7 +126,7 @@ theme_minimal()
 
 ```
 
-```{r top-tools, fig.alt = "Horizontal bar chart of the frequency of the top 10 most used AI tools in hallucination cases. Implied, Unidentified, and Chat GPT were used the most, with noticeably higher frequencies than the other AI tools.}
+```{r top-tools, fig.alt = "Horizontal bar chart of the frequency of the top 10 most used AI tools in hallucination cases. Implied, Unidentified, and Chat GPT were used the most, with noticeably higher frequencies than the other AI tools."}
 max_freq <- max(llm_summary$freq, na.rm = TRUE)
 step <- ceiling(max_freq / 5)  
 
