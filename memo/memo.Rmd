@@ -79,9 +79,6 @@ rates <- tibble::tribble(
   "CAD", 0.73
 )
 
-ai_data <- ai_data %>% 
-  mutate(currency = "USD")
-
 
 monetary_penalty_tidy <- ai_data %>%
   mutate(
@@ -90,14 +87,12 @@ monetary_penalty_tidy <- ai_data %>%
     monetary_penalty = na_if(monetary_penalty, "n/a"),
     monetary_penalty = na_if(monetary_penalty, "na"),
     monetary_penalty = na_if(monetary_penalty, "N/A"),
-    monetary_penalty = as.numeric(monetary_penalty)
-  )
-
-monetary_penalty_usd <- monetary_penalty_tidy %>%
+    monetary_penalty = as.numeric(monetary_penalty),
+    currency = str_to_upper(currency)  # normalize currency codes
+  ) %>%
+  left_join(rates, by = "currency") %>%     # JOIN EXCHANGE RATES
   mutate(
-    monetary_penalty_usd = if_else(str_to_upper(currency) == "USD",
-                                   monetary_penalty,
-                                   NA_real_)
+    monetary_penalty_usd = monetary_penalty * rate_to_usd
   )
 ```
 
