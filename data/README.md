@@ -3,7 +3,7 @@
 ### AI_Hallucination_Cases_renamed_variables
 
 - `case_name`: The official title of the legal case.
-- `court`: The court where the case was heard.
+- `court_location`: The state of the court where the case was heard.
 - `state`: The state(s) or jurisdiction(s) where the case took place.
 - `date`: The date when the decision or event related to AI hallucination occurred.
 - `parties`: The party responsible for using AI-generated or hallucinated content.

@@ -213,7 +213,7 @@ max_cases <- max(monthly_tools$n, na.rm = TRUE)
 
 We aimed to analyze monthly trends in hallucination cases by comparing occurrences across different LLM tools. To ensure consistency, we formatted all dates as year-month-day and grouped cases by month. We filtered for rows with entries in the ‘ai_tool’ column. Using case_when(), we standardized tool names (ChatGPT, MS CoPilot, Gemini) regardless of synonyms or capitalization. We focused analysis on the top three LLMs based on reported cases. For clarity in the legend, we listed LLMs in descending order of total cases by grouping and counting entries. We adjusted the y-axis to fit the maximum number of cases found, using the max_cases variable for customization. To avoid overcrowding the x-axis, we displayed axis breaks every 6 months instead of every month. Finally, we chose the “Dark2” palette from RColorBrewer for accessibility.
 
-```{r plot-one, message = FALSE, warning = FALSE, fig.alt = "Line graph from 2023 to 2025 of number of AI hallucination cases by the 3 most used LLM types represented by three color-coded lines. OpenAI/ChatGPT, MS Copilot, and Gemini are the three large language models plotted. Cases spike in the beginning of 2025 with OpenAI/ChatGPT cases inreasing the most."}
+```{r line-graph-trend-by-LLM, message = FALSE, warning = FALSE, fig.alt = "Line graph from 2023 to 2025 of number of AI hallucination cases by the 3 most used LLM types represented by three color-coded lines. OpenAI/ChatGPT, MS Copilot, and Gemini are the three large language models plotted. Cases spike in the beginning of 2025 with OpenAI/ChatGPT cases inreasing the most."}
 
 
 ggplot(monthly_tools,
@@ -394,7 +394,7 @@ us_map <- map_data("state") |>
 
 For this plot, our goal was to show how hallucination case outcomes vary by state. We focused on the main four categories (“Warning,” “Dismissed,” “Pending,” “Penalized”) and excluded other outcomes, such as “NA.” We standardized court_location capitalization to align with state names and excluded Hawaii and Puerto Rico due to their smaller mapped areas, which made them difficult to visualize alongside the other mainland states. For each state and outcome, we counted the number of cases, reshaped the data so each outcome was a separate column, and calculated total_cases for pie-chart sizing. To make case comparisons between states more visually intuitive, we sized each state’s pie chart according to its total number of reported cases. We placed the pies at each state’s geographic center, adjusting their radius based on case count for clear visualization. We used the map_data() function along with a “state” data frame for the U.S. basemap and overlaid scatterpie charts, where each slice represented the proportion of each outcome in a state. We defined outcome columns explicitly and used a colorblind-friendly palette (Okabe–Ito) for accessibility.
 
-```{r state-pie-map, message = FALSE, warning = FALSE, fig.alt = "State Pie map of the magnitude of AI hallucination cases and corresponding outcome by state. Relative size of the pie charts correlates to the number of cases in the state. New York and California have the highest number of cases. Slices are color-coded by outcome and show the majority of New York and California's cases resulted in either a warning or penalty."}
+```{r state-pie-map-cases-by-outcome, message = FALSE, warning = FALSE, fig.alt = "State Pie map of the magnitude of AI hallucination cases and corresponding outcome by state. Relative size of the pie charts correlates to the number of cases in the state. New York and California have the highest number of cases. Slices are color-coded by outcome and show the majority of New York and California's cases resulted in either a warning or penalty."}
 
 ggplot() +
   geom_polygon(
@@ -509,7 +509,7 @@ hall_outcome <- ai_data |>
 
 We created a bubble plot to compare hallucination types against case outcomes. To order the x-axis meaningfully, we used fct_reorder() to sort outcomes by their total number of cases, ensuring the most common outcomes appear last. Each bubble represents a hallucination type–outcome pair, with its size showing how often that pairing occurs. Filled points with black outlines provided sharper contrast, and bubble sizes were set for distinct visibility. We applied a viridis color scale for accessibility, clearly labeled the axes for readability. Finally, we used a minimal theme and removed minor gridlines to highlight the data patterns.
 
-```{r plot-three, fig.alt = "Bubble map of the number of cases for each combination of the four outcomes and top five hallucination types. Color of the bubbles correspond to the type of AI hallucination and relative size of the bubbles represents the number of cases under each intersection of variables. The majority of cases contain fake citations. Fake sources/quotes and fabricated cases have a relatively similar amount of cases across each outcome."}
+```{r bubble-map-top-five-hallucinations-by-outcome, fig.alt = "Bubble map of the number of cases for each combination of the four outcomes and top five hallucination types. Color of the bubbles correspond to the type of AI hallucination and relative size of the bubbles represents the number of cases under each intersection of variables. The majority of cases contain fake citations. Fake sources/quotes and fabricated cases have a relatively similar amount of cases across each outcome."}
 
 ggplot(hall_outcome,
        aes(x = fct_reorder(outcome, total_cases),
@@ -520,7 +520,7 @@ ggplot(hall_outcome,
   scale_size(range = c(3, 18), name = "Number of Cases") +
   scale_fill_viridis_d(option = "C", guide = "none") +
   labs(
-    title = "Bubble Map of Top 5 Hallucination Types by Outcome",
+    title = "Top 5 Hallucination Types by Outcome",
     x = "Outcome",
     y = "Hallucination Category"
   ) +
