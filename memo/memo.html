@@ -375,7 +375,9 @@ library(ggplot2)
 library(maps)
 library(scatterpie)
 library(stringr)
-#library(scales)
+
+#used for plot 3
+library(forcats)
 
 ai_data &lt;- read_csv(&quot;../data/Charlotin-hallucination_cases.csv&quot;)
 #view(ai_data)</code></pre>
@@ -383,6 +385,7 @@ ai_data &lt;- read_csv(&quot;../data/Charlotin-hallucination_cases.csv&quot;)
 <h2>Data Clean Up Steps for Overall Data</h2>
 <div id="step-1" class="section level5">
 <h5>Step 1:</h5>
+<p>First, we renamed the variables in the dataset.</p>
 <pre class="r"><code>ai_data &lt;- as_tibble(ai_data) |&gt;
   rename(
 `case_name` = `Case Name`,
@@ -403,6 +406,9 @@ ai_data &lt;- read_csv(&quot;../data/Charlotin-hallucination_cases.csv&quot;)
 </div>
 <div id="step-2" class="section level5">
 <h5>Step 2:</h5>
+<p>Next, we did some general cleanup for six of our variables by
+removing extra spaces, capitalizing each word, and converting all empty
+cells to N/A.</p>
 <pre class="r"><code>ai_data &lt;- ai_data |&gt;
   mutate(
     across(
@@ -413,40 +419,53 @@ ai_data &lt;- read_csv(&quot;../data/Charlotin-hallucination_cases.csv&quot;)
 </div>
 <div id="step-3" class="section level5">
 <h5>Step 3:</h5>
+<p>Although we did not end up using the monetary penalty variable for
+our final plots, we cleaned it up by first establishing the currency
+exchange rates, then converting everything to lowercase and making empty
+cells NA. Finally, we converted all amounts into USD using the exchange
+rate table, and replaced all original values with the USD
+conversion.</p>
 <pre class="r"><code>rates &lt;- tibble::tribble(
   ~currency, ~rate_to_usd,
   &quot;USD&quot;, 1,
   &quot;EUR&quot;, 1.07,
-  &quot;GBP&quot;, 1.24,
-  &quot;CAD&quot;, 0.73
+  &quot;Gbp&quot;, 1.24,
+  &quot;Cad&quot;, 0.73,
+  &quot;Ils&quot;, 0.31,
+  &quot;Aud&quot;, 0.66
 )
 
-ai_data &lt;- ai_data %&gt;% 
-  mutate(currency = &quot;USD&quot;)
 
-
-monetary_penalty_tidy &lt;- ai_data %&gt;%
+monetary_penalty_clean &lt;- ai_data |&gt;
   mutate(
-    monetary_penalty = str_replace_all(monetary_penalty, &quot;[$,]&quot;, &quot;&quot;),
-    monetary_penalty = na_if(monetary_penalty, &quot;none&quot;),
-    monetary_penalty = na_if(monetary_penalty, &quot;n/a&quot;),
-    monetary_penalty = na_if(monetary_penalty, &quot;na&quot;),
-    monetary_penalty = na_if(monetary_penalty, &quot;N/A&quot;),
-    monetary_penalty = as.numeric(monetary_penalty)
-  )</code></pre>
-<pre><code>## Warning: There was 1 warning in `mutate()`.
-## ℹ In argument: `monetary_penalty = as.numeric(monetary_penalty)`.
-## Caused by warning:
-## ! NAs introduced by coercion</code></pre>
-<pre class="r"><code>monetary_penalty_usd &lt;- monetary_penalty_tidy %&gt;%
+    monetary_penalty_clean = monetary_penalty |&gt;
+      str_replace_all(&quot;[$,]&quot;, &quot;&quot;) |&gt;
+      str_squish(),
+    monetary_penalty_clean = na_if(str_to_lower(monetary_penalty_clean), &quot;none&quot;),
+    monetary_penalty_clean = na_if(monetary_penalty_clean, &quot;n/a&quot;),
+    monetary_penalty_clean = na_if(monetary_penalty_clean, &quot;na&quot;),
+    monetary_penalty_clean = na_if(monetary_penalty_clean, &quot;N/A&quot;),
+    currency = str_extract(
+      str_to_lower(monetary_penalty_clean),
+      &quot;(usd|cad|ils|eur|gbp|aud)&quot;
+    ),
+    currency = str_to_upper(currency),
+    monetary_amount = readr::parse_number(monetary_penalty_clean),
+    currency = if_else(is.na(currency) &amp; !is.na(monetary_amount),
+                       &quot;USD&quot;, currency)
+  ) |&gt;
+  left_join(rates, by = &quot;currency&quot;) |&gt;
   mutate(
-    monetary_penalty_usd = if_else(str_to_upper(currency) == &quot;USD&quot;,
-                                   monetary_penalty,
-                                   NA_real_)
+    monetary_penalty_usd = monetary_amount * rate_to_usd,
+    currency = if_else(!is.na(monetary_amount), &quot;USD&quot;, NA_character_)
   )</code></pre>
 </div>
 <div id="step-4" class="section level5">
 <h5>Step 4:</h5>
+<p>Finally, we cleaned the professional sanction variable. We also did
+not use this variable in our final plots, but the cleanup consisted of
+standardizing all variations of yes/y and no/n to be “Yes” and “No” for
+readability.</p>
 <pre class="r"><code>ai_data &lt;- ai_data |&gt;
   mutate(
     professional_sanction = case_when(
@@ -467,8 +486,12 @@ monetary_penalty_tidy &lt;- ai_data %&gt;%
 <h4>Plot 1 Data Cleanup</h4>
 <div id="step-1-1" class="section level5">
 <h5>Step 1:</h5>
-<pre class="r"><code>### Standardizing Text
-ai_tool_tidy &lt;- ai_data |&gt;
+<p>First, we cleaned the AI tool variable. To do this, we got rid of
+extra spaces and punctuation, converted all text to lowercase, and made
+all empty cells NA. Then, we made a list of synonyms for all of the most
+frequently used LLM’s, and finally used the mutate() command to replace
+all variations of each AI tool spelling with a standardized version.</p>
+<pre class="r"><code>ai_tool_tidy &lt;- ai_data |&gt;
   mutate(ai_tool = str_replace_all(ai_tool, &quot; and | &amp; &quot;, &quot;,&quot;)) |&gt;
   separate_rows(ai_tool, sep = &quot;,|/|;&quot;) |&gt;
   mutate(ai_tool = str_squish(ai_tool),
@@ -476,7 +499,6 @@ ai_tool_tidy &lt;- ai_data |&gt;
          ai_tool = if_else(str_to_lower(ai_tool) %in% c(&quot;n/a&quot;,&quot;na&quot;,&quot;none&quot;), NA_character_, ai_tool)) |&gt;
   drop_na(ai_tool)
 
-### Settings Synonyms
 synonyms &lt;- c(
   &quot;ChatGPT&quot; = &quot;OpenAI ChatGPT&quot;,
   &quot;GPT-4&quot; = &quot;OpenAI ChatGPT&quot;,
@@ -495,6 +517,12 @@ ai_tool_tidy &lt;- ai_tool_tidy |&gt;
 </div>
 <div id="step-2-1" class="section level5">
 <h5>Step 2:</h5>
+<p>Next, we found and ranked the amount of hallucination cases for each
+type of LLM each month. Our first chunk of code converts each date to a
+real date object and extracts the first day of that month. Next, we
+identified which LLM was used, then counted the number of cases for each
+tool each month. Finally, we computed the LLM with the largest monthly
+value and ordered them from largest to smallest.</p>
 <pre class="r"><code>monthly_tools &lt;- ai_data |&gt;
   mutate(
     date  = ymd(date),
@@ -527,6 +555,19 @@ max_cases &lt;- max(monthly_tools$n, na.rm = TRUE)</code></pre>
 </div>
 <div id="final-plot-1" class="section level3">
 <h3>Final Plot 1</h3>
+<p>We aimed to analyze monthly trends in hallucination cases by
+comparing occurrences across different LLM tools. To ensure consistency,
+we formatted all dates as year-month-day and grouped cases by month. We
+filtered for rows with entries in the ‘ai_tool’ column. Using
+case_when(), we standardized tool names (ChatGPT, MS CoPilot, Gemini)
+regardless of synonyms or capitalization. We focused analysis on the top
+three LLMs based on reported cases. For clarity in the legend, we listed
+LLMs in descending order of total cases by grouping and counting
+entries. We adjusted the y-axis to fit the maximum number of cases
+found, using the max_cases variable for customization. To avoid
+overcrowding the x-axis, we displayed axis breaks every 6 months instead
+of every month. Finally, we chose the “Dark2” palette from RColorBrewer
+for accessibility.</p>
 <pre class="r"><code>ggplot(monthly_tools,
        aes(x = month, y = n, colour = tool, group = tool)) +
   geom_line(linewidth = 1) +
@@ -563,6 +604,14 @@ State</h3>
 <h4>Plot 2 Data Cleanup</h4>
 <div id="step-1-2" class="section level5">
 <h5>Step 1:</h5>
+<p>First, we standardized the court locations across the dataset. Our
+code uses the case_when() command to look through each court location
+and check it against a series of synonyms and alternative
+spellings/abbreviations used to refer to different states. When a match
+is found, the text is replaced with our standardized state name. All
+international courts were changed to “International,” since the purpose
+of this step was to clean up the variable to use in our US state pie
+map.</p>
 <pre class="r"><code>ai_data &lt;- ai_data |&gt;
   mutate(
     court_location = case_when(
@@ -622,6 +671,10 @@ State</h3>
 </div>
 <div id="step-2-2" class="section level5">
 <h5>Step 2:</h5>
+<p>Next, we had to clean the outcome variable. We took the same approach
+as in the previous step, using the mutate() and case_when() commands to
+standardize the names of each case outcome into either “Penalized,”
+“Warning,” “Dismissed,” or “Pending.”</p>
 <pre class="r"><code>ai_data &lt;- ai_data |&gt;
   mutate(
     outcome = case_when(
@@ -632,6 +685,19 @@ State</h3>
       TRUE ~ outcome
     )
   )</code></pre>
+</div>
+<div id="step-3-1" class="section level5">
+<h5>Step 3:</h5>
+<p>Finally, we had to simplify the case outcomes and prepare them for
+the map plot. We began by creating a new variable that kept only our
+four standardized outcome categories. We then removed states not
+included in the map. Next, we counted how many times each outcome
+occurred in each state and reshaped the data into a wide format with one
+row per state. Then, we counted each state’s total number of cases and
+matched the data to geographic center points for plotting. Finally, we
+assigned color values for each outcome category and prepared a clean
+U.S. map layout to support the visualization of state-level outcome
+distributions.</p>
 <pre class="r"><code>ai_data_outcome &lt;- ai_data |&gt;
   mutate(
     outcome_simple = case_when(
@@ -687,6 +753,23 @@ us_map &lt;- map_data(&quot;state&quot;) |&gt;
 </div>
 <div id="final-plot-2" class="section level3">
 <h3>Final Plot 2</h3>
+<p>For this plot, our goal was to show how hallucination case outcomes
+vary by state. We focused on the main four categories (“Warning,”
+“Dismissed,” “Pending,” “Penalized”) and excluded other outcomes, such
+as “NA.” We standardized court_location capitalization to align with
+state names and excluded Hawaii and Puerto Rico due to their smaller
+mapped areas, which made them difficult to visualize alongside the other
+mainland states. For each state and outcome, we counted the number of
+cases, reshaped the data so each outcome was a separate column, and
+calculated total_cases for pie-chart sizing. To make case comparisons
+between states more visually intuitive, we sized each state’s pie chart
+according to its total number of reported cases. We placed the pies at
+each state’s geographic center, adjusting their radius based on case
+count for clear visualization. We used the map_data() function along
+with a “state” data frame for the U.S. basemap and overlaid scatterpie
+charts, where each slice represented the proportion of each outcome in a
+state. We defined outcome columns explicitly and used a
+colorblind-friendly palette (Okabe–Ito) for accessibility.</p>
 <pre class="r"><code>ggplot() +
   geom_polygon(
     data = us_map,
@@ -727,6 +810,8 @@ us_map &lt;- map_data(&quot;state&quot;) |&gt;
 <h4>Plot 3 Data Cleanup</h4>
 <div id="step-1-3" class="section level5">
 <h5>Step 1:</h5>
+<p>First, we standardized the AI tool variable. We used the same method
+as for the court location and outcome variables cleanup.</p>
 <pre class="r"><code>ai_data &lt;- ai_data |&gt;
   mutate(
     hallucination = case_when(
@@ -747,12 +832,13 @@ us_map &lt;- map_data(&quot;state&quot;) |&gt;
 </div>
 <div id="step-2-3" class="section level5">
 <h5>Step 2:</h5>
-<pre class="r"><code>library(tidyverse)
-library(scales)
-library(forcats)
-
-
-ai_data &lt;- ai_data |&gt;
+<p>Finally, we converted all empty cells to NA for the standardized
+outcome variable, then identified the five most common hallucination
+types. We calculated the top hallucinations by frequency and filtered
+the data to include only those categories with valid outcomes. We then
+counted how often each outcome occurred for each hallucination type and
+calculated both totals and percentages within each outcome group.</p>
+<pre class="r"><code>ai_data &lt;- ai_data |&gt;
   mutate(
     outcome = str_squish(outcome),
     outcome = na_if(outcome, &quot;NA&quot;),
@@ -792,6 +878,16 @@ hall_outcome &lt;- ai_data |&gt;
 </div>
 <div id="final-plot-3" class="section level3">
 <h3>Final Plot 3</h3>
+<p>We created a bubble plot to compare hallucination types against case
+outcomes. To order the x-axis meaningfully, we used fct_reorder() to
+sort outcomes by their total number of cases, ensuring the most common
+outcomes appear last. Each bubble represents a hallucination
+type–outcome pair, with its size showing how often that pairing occurs.
+Filled points with black outlines provided sharper contrast, and bubble
+sizes were set for distinct visibility. We applied a viridis color scale
+for accessibility, clearly labeled the axes for readability. Finally, we
+used a minimal theme and removed minor gridlines to highlight the data
+patterns.</p>
 <pre class="r"><code>ggplot(hall_outcome,
        aes(x = fct_reorder(outcome, total_cases),
            y = hallucination,

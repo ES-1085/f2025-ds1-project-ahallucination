@@ -4,7 +4,7 @@ author: "Brynn Sasha & Yuka"
 output: html_document
 ---
 
-This document should contain a detailed account of the data clean up for your data and the design choices you are making for your plots. For instance you will want to document choices you've made that were intentional for your graphic, e.g. color you've chosen for the plot. Think of this document as a code script someone can follow to reproduce the data cleaning steps and graphics in your handout.
+## Loading Packages
 
 ```{r load-packages, message = FALSE}
 
@@ -35,6 +35,8 @@ ai_data <- read_csv("../data/Charlotin-hallucination_cases.csv")
 
 ##### Step 1: 
 
+First, we renamed the variables in the dataset.
+
 ```{r rename-variables}
 ai_data <- as_tibble(ai_data) |>
   rename(
@@ -55,7 +57,9 @@ ai_data <- as_tibble(ai_data) |>
 )
 ```
 
-##### Step 2:
+##### Step 2: 
+
+Next, we did some general cleanup for six of our variables by removing extra spaces, capitalizing each word, and converting all empty cells to N/A.
 
 ```{r data-cleanup}
 ai_data <- ai_data |>
@@ -68,6 +72,8 @@ ai_data <- ai_data |>
 ```
 
 ##### Step 3:
+
+Although we did not end up using the monetary penalty variable for our final plots, we cleaned it up by first establishing the currency exchange rates, then converting everything to lowercase and making empty cells NA. Finally, we converted all amounts into USD using the exchange rate table, and replaced all original values with the USD conversion.
 
 ```{r monetary-penalty-cleanup}
 
@@ -110,6 +116,8 @@ monetary_penalty_clean <- ai_data |>
 
 ##### Step 4:
 
+Finally, we cleaned the professional sanction variable. We also did not use this variable in our final plots, but the cleanup consisted of standardizing all variations of yes/y and no/n to be “Yes” and “No” for readability.
+
 ```{r professional-sanction-cleanup}
 
 ai_data <- ai_data |>
@@ -132,6 +140,8 @@ ________________________________________________________________________________
 #### Plot 1 Data Cleanup
 
 ##### Step 1:
+
+First, we cleaned the AI tool variable. To do this, we got rid of extra spaces and punctuation, converted all text to lowercase, and made all empty cells NA. Then, we made a list of synonyms for all of the most frequently used LLM’s, and finally used the mutate() command to replace all variations of each AI tool spelling with a standardized version.
 
 ```{r ai-tool-cleanup}
 
@@ -162,6 +172,10 @@ ai_tool_tidy <- ai_tool_tidy |>
 ```
 
 ##### Step 2:
+
+
+Next, we found and ranked the amount of hallucination cases for each type of LLM each month. Our first chunk of code converts each date to a real date object and extracts the first day of that month. Next, we identified which LLM was used, then counted the number of cases for each tool each month. Finally, we computed the LLM with the largest monthly value and ordered them from largest to smallest.
+
 
 ```{r plot-one-general-cleanup}
 
@@ -237,6 +251,8 @@ ggplot(monthly_tools,
 
 ##### Step 1:
 
+First, we standardized the court locations across the dataset. Our code uses the case_when() command to look through each court location and check it against a series of synonyms and alternative spellings/abbreviations used to refer to different states. When a match is found, the text is replaced with our standardized state name. All international courts were changed to “International,” since the purpose of this step was to clean up the variable to use in our US state pie map. 
+
 ```{r court-location-cleanup}
 
 ai_data <- ai_data |>
@@ -300,7 +316,7 @@ ai_data <- ai_data |>
 
 ##### Step 2:
 
-For this plot, our goal was to show how hallucination case outcomes vary by state. We focused on the main four categories (“Warning,” “Dismissed,” “Pending,” “Penalized”) and excluded other outcomes, such as “NA.” We standardized court_location capitalization to align with state names and excluded Hawaii and Puerto Rico due to their smaller mapped areas, which made them difficult to visualize alongside the other mainland states. For each state and outcome, we counted the number of cases, reshaped the data so each outcome was a separate column, and calculated total_cases for pie-chart sizing. To make case comparisons between states more visually intuitive, we sized each state’s pie chart according to its total number of reported cases. We placed the pies at each state’s geographic center, adjusting their radius based on case count for clear visualization. We used the map_data() function along with a “state” data frame for the U.S. basemap and overlaid scatterpie charts, where each slice represented the proportion of each outcome in a state. We defined outcome columns explicitly and used a colorblind-friendly palette (Okabe–Ito) for accessibility.
+Next, we had to clean the outcome variable. We took the same approach as in the previous step, using the mutate() and case_when() commands to standardize the names of each case outcome into either “Penalized,” “Warning,” “Dismissed,” or “Pending.”
 
 ```{r outcome-cleanup}
 
@@ -316,6 +332,10 @@ ai_data <- ai_data |>
   )
 
 ```
+
+##### Step 3:
+
+Finally, we had to simplify the case outcomes and prepare them for the map plot. We began by creating a new variable that kept only our four standardized outcome categories. We then removed states not included in the map. Next, we counted how many times each outcome occurred in each state and reshaped the data into a wide format with one row per state. Then, we counted each state’s total number of cases and matched the data to geographic center points for plotting. Finally, we assigned color values for each outcome category and prepared a clean U.S. map layout to support the visualization of state-level outcome distributions.
 
 ```{r plot-two-general-cleanup}
 ai_data_outcome <- ai_data |>
@@ -370,8 +390,9 @@ us_map <- map_data("state") |>
   filter(!region %in% c("Hawaii"))
 ```
 
-
 ### Final Plot 2
+
+For this plot, our goal was to show how hallucination case outcomes vary by state. We focused on the main four categories (“Warning,” “Dismissed,” “Pending,” “Penalized”) and excluded other outcomes, such as “NA.” We standardized court_location capitalization to align with state names and excluded Hawaii and Puerto Rico due to their smaller mapped areas, which made them difficult to visualize alongside the other mainland states. For each state and outcome, we counted the number of cases, reshaped the data so each outcome was a separate column, and calculated total_cases for pie-chart sizing. To make case comparisons between states more visually intuitive, we sized each state’s pie chart according to its total number of reported cases. We placed the pies at each state’s geographic center, adjusting their radius based on case count for clear visualization. We used the map_data() function along with a “state” data frame for the U.S. basemap and overlaid scatterpie charts, where each slice represented the proportion of each outcome in a state. We defined outcome columns explicitly and used a colorblind-friendly palette (Okabe–Ito) for accessibility.
 
 ```{r state-pie-map, message = FALSE, warning = FALSE, fig.alt = "State Pie map of the magnitude of AI hallucination cases and corresponding outcome by state. Relative size of the pie charts correlates to the number of cases in the state. New York and California have the highest number of cases. Slices are color-coded by outcome and show the majority of New York and California's cases resulted in either a warning or penalty."}
 
@@ -416,6 +437,8 @@ ggplot() +
 
 ##### Step 1:
 
+First, we standardized the AI tool variable. We used the same method as for the court location and outcome variables cleanup.
+
 ```{r hallucination-cleanup}
 
 ai_data <- ai_data |>
@@ -440,7 +463,7 @@ ai_data <- ai_data |>
 
 ##### Step 2:
 
-We created a bubble plot to compare hallucination types against case outcomes. To order the x-axis meaningfully, we used fct_reorder() to sort outcomes by their total number of cases, ensuring the most common outcomes appear last. Each bubble represents a hallucination type–outcome pair, with its size showing how often that pairing occurs. Filled points with black outlines provided sharper contrast, and bubble sizes were set for distinct visibility. We applied a viridis color scale for accessibility, clearly labeled the axes for readability. Finally, we used a minimal theme and removed minor gridlines to highlight the data patterns.
+Finally, we converted all empty cells to NA for the standardized outcome variable, then identified the five most common hallucination types. We calculated the top hallucinations by frequency and filtered the data to include only those categories with valid outcomes. We then counted how often each outcome occurred for each hallucination type and calculated both totals and percentages within each outcome group.
 
 ```{r plot-three-general-cleanup}
 
@@ -483,6 +506,8 @@ hall_outcome <- ai_data |>
 ```
 
 ### Final Plot 3
+
+We created a bubble plot to compare hallucination types against case outcomes. To order the x-axis meaningfully, we used fct_reorder() to sort outcomes by their total number of cases, ensuring the most common outcomes appear last. Each bubble represents a hallucination type–outcome pair, with its size showing how often that pairing occurs. Filled points with black outlines provided sharper contrast, and bubble sizes were set for distinct visibility. We applied a viridis color scale for accessibility, clearly labeled the axes for readability. Finally, we used a minimal theme and removed minor gridlines to highlight the data patterns.
 
 ```{r plot-three, fig.alt = "Bubble map of the number of cases for each combination of the four outcomes and top five hallucination types. Color of the bubbles correspond to the type of AI hallucination and relative size of the bubbles represents the number of cases under each intersection of variables. The majority of cases contain fake citations. Fake sources/quotes and fabricated cases have a relatively similar amount of cases across each outcome."}
 
